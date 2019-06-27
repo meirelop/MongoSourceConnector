@@ -13,6 +13,7 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class MySourceTask extends SourceTask {
   static final Logger log = LoggerFactory.getLogger(MySourceTask.class);
@@ -60,6 +61,8 @@ public class MySourceTask extends SourceTask {
       records.add(sourceRecord);
     }
     cursor.close();
+    //TimeUnit.SECONDS.sleep(5);
+    TimeUnit.SECONDS.sleep(config.getPollInterval());
     return records;
   }
 

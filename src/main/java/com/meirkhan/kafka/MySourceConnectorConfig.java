@@ -30,6 +30,9 @@ public class MySourceConnectorConfig extends AbstractConfig {
   public static final String MONGO_COLLECTION_CONFIG = "mongo.collection";
   private static final String MONGO_COLLECTION_CONFIG_DOC = "MongoDB collection from which to query";
 
+  public static final String POLL_INTERVAL_CONFIG = "poll.interval.sec";
+  private static final String POLL_INTERVAL_CONFIG_DOC = "Polling delay in seconds";
+
 
   public MySourceConnectorConfig(ConfigDef config, Map<String, String> parsedConfig) {
     super(config, parsedConfig);
@@ -46,7 +49,8 @@ public class MySourceConnectorConfig extends AbstractConfig {
             .define(MONGO_HOST_CONFIG, Type.STRING, "localhost", Importance.HIGH, MONGO_HOST_CONFIG_DOC)
             .define(MONGO_PORT_CONFIG, Type.INT, 27017, Importance.HIGH, MONGO_PORT_CONFIG_DOC)
             .define(MONGO_DB_CONFIG, Type.STRING, Importance.HIGH, MONGO_DB_CONFIG_DOC)
-            .define(MONGO_COLLECTION_CONFIG, Type.STRING, Importance.HIGH, MONGO_COLLECTION_CONFIG_DOC);
+            .define(MONGO_COLLECTION_CONFIG, Type.STRING, Importance.HIGH, MONGO_COLLECTION_CONFIG_DOC)
+            .define(POLL_INTERVAL_CONFIG, Type.INT, 1, Importance.HIGH, POLL_INTERVAL_CONFIG_DOC);
   }
 
   public Integer getBatchSize() {
@@ -64,5 +68,7 @@ public class MySourceConnectorConfig extends AbstractConfig {
   public String getMongoDbName() {return this.getString(MONGO_DB_CONFIG);}
 
   public String getMongoCollection() {return this.getString(MONGO_COLLECTION_CONFIG);}
+
+  public Integer getPollInterval() {return this.getInt(POLL_INTERVAL_CONFIG);}
 
 }
