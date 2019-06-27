@@ -17,11 +17,7 @@ import java.util.*;
 public class MySourceTask extends SourceTask {
   static final Logger log = LoggerFactory.getLogger(MySourceTask.class);
   public MySourceConnectorConfig config;
-  public MongoClient mongoClient = new MongoClient("localhost", 27017);
-  public DB database = mongoClient.getDB("test");
-  public BasicDBObject searchQuery = new BasicDBObject();
-  public DBCollection collection = database.getCollection("products");
-
+  public DBCollection collection;
 
   @Override
   public String version() {
@@ -32,8 +28,11 @@ public class MySourceTask extends SourceTask {
   public void start(Map<String, String> map) {
     //TODO: Do things here that are required to start your task. This could be open a connection to a database, etc.
     config = new MySourceConnectorConfig(map);
+    MongoClient mongoClient = new MongoClient(config.getMongoHost(), config.getMongoPort());
+    DB database = mongoClient.getDB(config.getMongoDbName());
+    //DBCollection collection = database.getCollection(config.getMongoCollection());
+    this.collection = database.getCollection(config.getMongoCollection());
   }
-
 
   private Map<String, String> sourcePartition() {
     Map<String, String> map = new HashMap<>();
@@ -52,16 +51,12 @@ public class MySourceTask extends SourceTask {
 
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
-
-    // fetch data
     final ArrayList<SourceRecord> records = new ArrayList<>();
-    searchQuery.put("item", "pen");
+    BasicDBObject searchQuery = new BasicDBObject();
+    //searchQuery.put("item", "pen");
     DBCursor cursor = collection.find(searchQuery);
-
     while (cursor.hasNext()) {
-      //System.out.println(cursor.next());
       SourceRecord sourceRecord = generateSourceRecord(cursor.next());
-
       records.add(sourceRecord);
     }
     cursor.close();
@@ -83,6 +78,5 @@ public class MySourceTask extends SourceTask {
             null,
             null,
             issue.toString());
-
   }
 }
