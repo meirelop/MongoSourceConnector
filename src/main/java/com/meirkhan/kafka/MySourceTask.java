@@ -1,20 +1,12 @@
 package com.meirkhan.kafka;
 
-import com.meirkhan.kafka.model.Issue;
-import com.meirkhan.kafka.model.PullRequest;
-import com.meirkhan.kafka.model.User;
-import com.meirkhan.kafka.utils.DateUtils;
-import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
-import org.json.JSONArray;
-import org.json.JSONObject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
 import java.util.*;
-import static com.meirkhan.kafka.GitHubSchemas.*;
 
 public class MySourceTask extends SourceTask {
   static final Logger log = LoggerFactory.getLogger(MySourceTask.class);
