@@ -2,15 +2,25 @@ package com.meirkhan.kafka;
 
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.mongodb.BasicDBObject;
+
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import com.mongodb.MongoClient;
 
 import java.util.*;
 
 public class MySourceTask extends SourceTask {
   static final Logger log = LoggerFactory.getLogger(MySourceTask.class);
   public MySourceConnectorConfig config;
+  public MongoClient mongoClient = new MongoClient("localhost", 27017);
+  public DB database = mongoClient.getDB("test");
+  public BasicDBObject searchQuery = new BasicDBObject();
+  public DBCollection collection = database.getCollection("products");
 
 
   @Override
@@ -45,18 +55,16 @@ public class MySourceTask extends SourceTask {
 
     // fetch data
     final ArrayList<SourceRecord> records = new ArrayList<>();
+    searchQuery.put("item", "pen");
+    DBCursor cursor = collection.find(searchQuery);
 
+    while (cursor.hasNext()) {
+      //System.out.println(cursor.next());
+      SourceRecord sourceRecord = generateSourceRecord(cursor.next());
 
-    String temp []=new String[4];
-    temp[0]="hello";
-    temp[1]="world";
-    temp[2]="I am";
-    temp[3]="Meirkhajn";
-
-    for (int i=0; i < temp.length - 1; i++) {
-      SourceRecord sourceRecord = generateSourceRecord(temp[i]);
       records.add(sourceRecord);
     }
+    cursor.close();
     return records;
   }
 
@@ -65,7 +73,7 @@ public class MySourceTask extends SourceTask {
     //TODO: Do whatever is required to stop your task.
   }
 
-  private SourceRecord generateSourceRecord(String issue) {
+  private SourceRecord generateSourceRecord(DBObject issue) {
     return new SourceRecord(
             sourcePartition(),
             sourceOffset(),
@@ -74,7 +82,7 @@ public class MySourceTask extends SourceTask {
             null,
             null,
             null,
-            issue);
+            issue.toString());
 
   }
 }
