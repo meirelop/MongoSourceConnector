@@ -1,15 +1,13 @@
 package com.meirkhan.kafka;
 
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.mongodb.BasicDBObject;
-
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
 import java.util.*;
@@ -18,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 public class MySourceTask extends SourceTask {
   static final Logger log = LoggerFactory.getLogger(MySourceTask.class);
   public MySourceConnectorConfig config;
-  public DBCollection collection;
+  public MongoCollection collection;
 
   @Override
   public String version() {
@@ -30,9 +28,8 @@ public class MySourceTask extends SourceTask {
     //TODO: Do things here that are required to start your task. This could be open a connection to a database, etc.
     config = new MySourceConnectorConfig(map);
     MongoClient mongoClient = new MongoClient(config.getMongoHost(), config.getMongoPort());
-    DB database = mongoClient.getDB(config.getMongoDbName());
-    //DBCollection collection = database.getCollection(config.getMongoCollection());
-    this.collection = database.getCollection(config.getMongoCollection());
+    MongoDatabase database = mongoClient.getDatabase(config.getMongoDbName());
+    this.collection = database.getCollection(this.config.getMongoCollectionName());
   }
 
   private Map<String, String> sourcePartition() {
@@ -53,15 +50,20 @@ public class MySourceTask extends SourceTask {
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
     final ArrayList<SourceRecord> records = new ArrayList<>();
-    BasicDBObject searchQuery = new BasicDBObject();
-    //searchQuery.put("item", "pen");
-    DBCursor cursor = collection.find(searchQuery);
-    while (cursor.hasNext()) {
-      SourceRecord sourceRecord = generateSourceRecord(cursor.next());
+    FindIterable cursor;
+
+    if (this.config.getMongoQueryFilters().isEmpty()) {
+      cursor = collection.find();
+    } else {
+      BasicDBObject obj = BasicDBObject.parse(this.config.getMongoQueryFilters());
+      cursor = collection.find(obj);
+    }
+    Iterator iter = cursor.iterator();
+    while (iter.hasNext()) {
+      SourceRecord sourceRecord = generateSourceRecord(iter.next());
       records.add(sourceRecord);
     }
-    cursor.close();
-    //TimeUnit.SECONDS.sleep(5);
+    cursor.iterator().close();
     TimeUnit.SECONDS.sleep(config.getPollInterval());
     return records;
   }
@@ -71,7 +73,7 @@ public class MySourceTask extends SourceTask {
     //TODO: Do whatever is required to stop your task.
   }
 
-  private SourceRecord generateSourceRecord(DBObject issue) {
+  private SourceRecord generateSourceRecord(Object issue) {
     return new SourceRecord(
             sourcePartition(),
             sourceOffset(),
