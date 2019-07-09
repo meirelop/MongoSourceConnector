@@ -91,7 +91,7 @@ public class MySourceConnectorConfig extends AbstractConfig {
     boolean isRightPattern = this.getString(MONGO_QUERY_CONFIG).matches("^db\\.(.+)find([\\(])(.*)([\\)])(\\;*)$");
     if (!isRightPattern) {
       log.error("Query syntax to MongoDB is not correct");
-      return;
+      //System.exit(0);
     }
   }
 }
