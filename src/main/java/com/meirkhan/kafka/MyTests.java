@@ -4,6 +4,8 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.FindIterable;
+import org.apache.kafka.connect.source.SourceRecord;
+import org.bson.BsonDocument;
 import org.bson.Document;
 
 import java.time.Instant;
@@ -19,7 +21,7 @@ public class MyTests {
 
 
     public static void main(String[] args) {
-//        FindIterable cursor;
+        FindIterable cursor;
 //        String fullQuery = "db.products.find()";
 //        Boolean isRightPattern = fullQuery.matches("^db\\.(.+)find([\\(])(.*)([\\)])(\\;*)$");
 //        System.out.println(isRightPattern);
@@ -48,12 +50,23 @@ public class MyTests {
 //        }
 //        cursor.iterator().close();
 
-        Instant instant1 = Instant.parse("2014-12-03T10:15:30.00Z");
-        Instant instant2 = Instant.now();
-        Instant res = MaxInstant(instant1, instant2);
-        System.out.println(res);
+        MongoClient mongoClient = new MongoClient("localhost", 27017);
+        MongoDatabase database = mongoClient.getDatabase("test");
+        MongoCollection collection = database.getCollection("table");
 
+        BasicDBObject gtQuery = new BasicDBObject();
+        gtQuery.put("incr", new BasicDBObject("$gt", 12));
 
+        BasicDBObject fieldObject = new BasicDBObject();
+        fieldObject.put("incr", 1);
+
+        cursor = collection.find(gtQuery);
+
+        Iterator iter = cursor.iterator();
+        while (iter.hasNext()) {
+            Object res = iter.next();
+            System.out.println(res);
+        }
 
 
     }
