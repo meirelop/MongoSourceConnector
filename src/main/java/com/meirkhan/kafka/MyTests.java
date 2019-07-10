@@ -14,6 +14,9 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoCursor;
 import org.apache.commons.lang3.StringUtils;
 import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.json.JSONObject;
 
@@ -56,19 +59,21 @@ public class MyTests {
         MongoDatabase database = mongoClient.getDatabase("test");
         MongoCollection collection = database.getCollection("table");
 
-        BasicDBObject gtQuery = new BasicDBObject();
-        gtQuery.put("incr", new BasicDBObject("$gt", 12));
+        List<DBObject> criteria = new ArrayList<>();
+        criteria.add(new BasicDBObject("incr", new BasicDBObject("$gt", 12)));
+        criteria.add(new BasicDBObject("incr", new BasicDBObject("$type", "number")));
+        criteria.add(new BasicDBObject(BasicDBObject.parse("")));
 
-        BasicDBObject fieldObject = new BasicDBObject();
-        fieldObject.put("incr", 1);
-
+        BasicDBObject gtQuery = new BasicDBObject("$and", criteria);
+        BasicDBObject gtQuery1 = new BasicDBObject();
         cursor = collection.find(gtQuery).iterator();
 
 
         while (cursor.hasNext()) {
             String res = cursor.next().toJson();
             JSONObject jsonObj = new JSONObject(res);
-            System.out.println(jsonObj.get("incr").getClass().getName());
+            Double qsddd = Double.valueOf((Double) jsonObj.get("incr"));
+            System.out.println(qsddd);
         }
     }
 }
