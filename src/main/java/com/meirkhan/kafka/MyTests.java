@@ -11,17 +11,19 @@ import org.bson.Document;
 import java.time.Instant;
 import java.util.Iterator;
 import com.mongodb.BasicDBObject;
+import com.mongodb.client.MongoCursor;
 import org.apache.commons.lang3.StringUtils;
 import com.mongodb.DBCollection;
 
-public class MyTests {
-    public static Instant MaxInstant (Instant i1, Instant i2) {
-        return i1.compareTo(i2) > 0 ? i1 : i2;
-    }
+import org.json.JSONObject;
 
+
+public class MyTests {
 
     public static void main(String[] args) {
-        FindIterable cursor;
+
+        MongoCursor<Document> cursor;
+
 //        String fullQuery = "db.products.find()";
 //        Boolean isRightPattern = fullQuery.matches("^db\\.(.+)find([\\(])(.*)([\\)])(\\;*)$");
 //        System.out.println(isRightPattern);
@@ -60,17 +62,15 @@ public class MyTests {
         BasicDBObject fieldObject = new BasicDBObject();
         fieldObject.put("incr", 1);
 
-        cursor = collection.find(gtQuery);
+        cursor = collection.find(gtQuery).iterator();
 
-        Iterator iter = cursor.iterator();
-        while (iter.hasNext()) {
-            Object res = iter.next();
-            System.out.println(res);
+
+        while (cursor.hasNext()) {
+            String res = cursor.next().toJson();
+            JSONObject jsonObj = new JSONObject(res);
+            System.out.println(jsonObj.get("incr").getClass().getName());
         }
-
-
     }
-
 }
 
 

@@ -1,14 +1,16 @@
 package com.meirkhan.kafka;
 
 
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.common.protocol.types.Field;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.apache.kafka.connect.errors.ConnectException;
+import org.bson.Document;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.mongodb.BasicDBObject;
@@ -28,6 +30,8 @@ public class MySourceTask extends SourceTask {
   public MySourceConnectorConfig config;
   public MongoCollection collection;
   protected Instant lastNumber;
+  protected Double lastIncrement;
+  String mode;
 
   @Override
   public String version() {
@@ -42,6 +46,8 @@ public class MySourceTask extends SourceTask {
     } catch (ConfigException e) {
       throw new ConnectException("Couldn't start MongoDBSourceTask due to configuration error", e);
     }
+
+    this.mode = config.getModeName();
 
 
     MongoClient mongoClient = new MongoClient(config.getMongoHost(), config.getMongoPort());
@@ -58,8 +64,12 @@ public class MySourceTask extends SourceTask {
           //System.out.println("No offset while initializing");
       } else {
           Object lastNumberObj = lastSourceOffset.get(CURRENT_TIME_FIELD);
+          Object lastIncrementObj = lastSourceOffset.get(INCREMENTING_OFFSET);
           if (lastNumberObj instanceof String) {
               lastNumber = Instant.parse((String) lastNumberObj);
+          }
+          if (lastIncrementObj instanceof String) {
+            lastIncrement = Double.valueOf((String) lastIncrementObj);
           }
           //System.out.printf("Offset in initializing: %s", lastNumberObj.toString());
       }
@@ -73,9 +83,10 @@ public class MySourceTask extends SourceTask {
     return map;
   }
 
-  private Map<String, String> sourceOffset(Instant updatedAt) {
+  private Map<String, String> sourceOffset(Instant curTime, Double offset) {
     Map<String, String> map = new HashMap<>();
-    map.put(CURRENT_TIME_FIELD, updatedAt.toString());
+    map.put(CURRENT_TIME_FIELD, curTime.toString());
+    map.put(INCREMENTING_OFFSET, offset.toString());
     return map;
   }
 
@@ -83,20 +94,41 @@ public class MySourceTask extends SourceTask {
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
     final ArrayList<SourceRecord> records = new ArrayList<>();
-    FindIterable cursor;
+    MongoCursor<Document> cursor;
+    String incrementColumn = config.getIncrementColumn();
+    Map<String, Object> lastOffsetObj = context.offsetStorageReader().offset(sourcePartition());
+    Double lastOffset;
+    if (lastOffsetObj == null) {
+      lastOffset = 0.0;
+    } else {
+      //lastOffset = (Integer) lastOffsetObj.get(INCREMENTING_OFFSET);
+      lastOffset = Double.valueOf((String) lastOffsetObj.get(INCREMENTING_OFFSET));
+    }
 
+    // TODO: implement 'TABLE' and 'QUERY' cases
     if (this.config.getMongoQueryFilters().isEmpty()) {
-      cursor = collection.find();
+      if (mode.equals("incrementing")) {
+        BasicDBObject gtQuery = new BasicDBObject();
+        gtQuery.put(incrementColumn, new BasicDBObject("$gt", lastOffset));
+        cursor = collection.find(gtQuery).iterator();
+      } else {
+        cursor = collection.find().iterator();
+      }
+
     } else {
       BasicDBObject obj = BasicDBObject.parse(this.config.getMongoQueryFilters());
-      cursor = collection.find(obj);
+      cursor = collection.find(obj).iterator();
     }
-    Iterator iter = cursor.iterator();
-    while (iter.hasNext()) {
-      SourceRecord sourceRecord = generateSourceRecord(iter.next());
+
+    while (cursor.hasNext()) {
+      String res = cursor.next().toJson();
+      JSONObject jsonObj = new JSONObject(res);
+      Double qs = Double.valueOf((Double) jsonObj.get(config.getIncrementColumn()));
+
+      SourceRecord sourceRecord = generateSourceRecord(res, qs);
       records.add(sourceRecord);
     }
-    cursor.iterator().close();
+    cursor.close();
     TimeUnit.SECONDS.sleep(config.getPollInterval());
     System.out.println(context.offsetStorageReader().offset(sourcePartition()));
     return records;
@@ -107,7 +139,7 @@ public class MySourceTask extends SourceTask {
     //TODO: Do whatever is required to stop your task.
   }
 
-  private SourceRecord generateSourceRecord(Object issue) {
+  private SourceRecord generateSourceRecord(Object issue, Double lastIncrID) {
 //    switch (mode) {
 //      case TABLE:
 //        String name = tableId.tableName(); // backwards compatible
@@ -123,7 +155,7 @@ public class MySourceTask extends SourceTask {
 
     return new SourceRecord(
             sourcePartition(),
-            sourceOffset(Instant.now()),
+            sourceOffset(Instant.now(), lastIncrID),
             config.getTopic(),
             null, // partition will be inferred by the framework
             null,
