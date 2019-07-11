@@ -104,7 +104,6 @@ db.transactions.insert(
 )
 
 
-
 Links:
 
 1. Why KC exists
@@ -163,6 +162,9 @@ https://kafka.apache.org/contact
 18. ---PRESTO
 Presto is Connector to MongoDb which allows to query from Mongo as SQL.
 
+19. Confluent blog on JDBC source connector
+https://www.confluent.io/blog/kafka-connect-deep-dive-jdbc-source-connector
+
 
 
 Error handling:
@@ -189,3 +191,10 @@ bin/kafka-console-producer --broker-list localhost:9092 --topic test
 start consumer
 bin/kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic transaction_items
 bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic test --from-beginning
+
+
+//TODO
+1. Type casting for "increment.column" which can handle any number type. Currently it can handle double
+2. Type casting for "timestamp.column"
+3. MongoDB projections does not work if passed as string input parameter, need to build from API
+4. do not repeat poll if offset is null and already was produced

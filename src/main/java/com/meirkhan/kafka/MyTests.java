@@ -58,22 +58,23 @@ public class MyTests {
         MongoClient mongoClient = new MongoClient("localhost", 27017);
         MongoDatabase database = mongoClient.getDatabase("test");
         MongoCollection collection = database.getCollection("table");
+        String query = "{ },{item:1,_id:0}";
 
         List<DBObject> criteria = new ArrayList<>();
         criteria.add(new BasicDBObject("incr", new BasicDBObject("$gt", 12)));
         criteria.add(new BasicDBObject("incr", new BasicDBObject("$type", "number")));
-        criteria.add(new BasicDBObject(BasicDBObject.parse("")));
+        criteria.add(new BasicDBObject("qty",40));
 
         BasicDBObject gtQuery = new BasicDBObject("$and", criteria);
         BasicDBObject gtQuery1 = new BasicDBObject();
-        cursor = collection.find(gtQuery).iterator();
+        cursor = collection.find(BasicDBObject.parse(query)).iterator();
 
 
         while (cursor.hasNext()) {
             String res = cursor.next().toJson();
             JSONObject jsonObj = new JSONObject(res);
             Double qsddd = Double.valueOf((Double) jsonObj.get("incr"));
-            System.out.println(qsddd);
+            System.out.println(res);
         }
     }
 }
