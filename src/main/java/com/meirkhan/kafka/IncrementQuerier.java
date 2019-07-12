@@ -9,45 +9,49 @@ import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import static com.meirkhan.kafka.MySchemas.*;
 
 
 public class IncrementQuerier extends TableQuerier{
-    private String mongoHost;
-    private Integer mongoPort;
-    private String dbName;
-    private String collectionName;
     private String incrementColumn;
+    private MongoClient mongoClient;
+    private MongoDatabase database;
+    private MongoCollection collection;
 
     public IncrementQuerier(String mongoHost,
-                            Integer mongoPort,
+                            int mongoPort,
                             String dbName,
                             String collectionName,
                             String incrementColumn) {
-        //super(mongoHost, mongoPort, dbName, collectionName, incrementColumn);
-        this.mongoHost = mongoHost;
-        this.mongoPort = mongoPort;
-        this.dbName = dbName;
-        this.collectionName = collectionName;
+
+        super(mongoHost,mongoPort,dbName,collectionName);
+        this.mongoClient = new MongoClient(mongoHost, mongoPort);
+        this.database = mongoClient.getDatabase(dbName);
+        this.collection = database.getCollection(collectionName);
         this.incrementColumn = incrementColumn;
     }
 
-    private MongoClient mongoClient = new MongoClient(mongoHost, mongoPort);
-    private MongoDatabase database = mongoClient.getDatabase(dbName);
-    private MongoCollection collection = database.getCollection(collectionName);
+    public MongoCursor<Document> getBatchCursor() {
+        return cursor;
+    }
 
-    public MongoCursor<Document> getCursor (Double lastIncrement) {
+    public MongoCursor<Document> getIncrementCursor (Double lastIncrement) {
         MongoCursor<Document> cursor;
         List<DBObject> criteria = new ArrayList<>();
         criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject("$gt", lastIncrement)));
         criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject("$type", "number")));
         BasicDBObject gtQuery = new BasicDBObject("$and", criteria);
         cursor = collection.find(gtQuery).iterator();
+        return cursor;
+    }
 
+    public MongoCursor<Document> getTimestampCursor() {
+        return cursor;
+    }
+
+    public MongoCursor<Document> getIncrementTimestampCursor() {
         return cursor;
     }
 

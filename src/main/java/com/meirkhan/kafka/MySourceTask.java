@@ -1,6 +1,7 @@
 package com.meirkhan.kafka;
 
 
+import com.mongodb.DBObject;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -17,6 +18,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 
 
+import java.util.PriorityQueue;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.time.Instant;
@@ -28,10 +30,12 @@ import static com.meirkhan.kafka.MySchemas.*;
 public class MySourceTask extends SourceTask {
   static final Logger log = LoggerFactory.getLogger(MySourceTask.class);
   public MySourceConnectorConfig config;
-  public MongoCollection collection;
+  //public MongoCollection collection;
   protected Instant lastNumber;
   protected Double lastIncrement;
+//  protected MongoCursor<Document> cursor;
   String mode;
+  private PriorityQueue<TableQuerier> tableQueue = new PriorityQueue<TableQuerier>();
 
   @Override
   public String version() {
@@ -49,24 +53,41 @@ public class MySourceTask extends SourceTask {
 
     this.mode = config.getModeName();
 
-
-    MongoClient mongoClient = new MongoClient(config.getMongoHost(), config.getMongoPort());
-    MongoDatabase database = mongoClient.getDatabase(config.getMongoDbName());
-    this.collection = database.getCollection(this.config.getMongoCollectionName());
+    //MongoClient mongoClient = new MongoClient(config.getMongoHost(), config.getMongoPort());
+    //MongoDatabase database = mongoClient.getDatabase(config.getMongoDbName());
+    //this.collection = database.getCollection(this.config.getMongoCollectionName());
     initializeLastVariables();
+
+    if (mode.equals(INCREMENTING_FIELD)) {
+      log.info("Creating IncrementQuerier instance");
+      log.info(config.getMongoHost());
+      log.info(config.getMongoCollectionName());
+      log.info(config.getMongoDbName());
+      log.info(config.getIncrementColumn());
+      tableQueue.add(
+              new IncrementQuerier(
+                      config.getMongoHost(),
+                      config.getMongoPort(),
+                      config.getMongoDbName(),
+                      config.getMongoCollectionName(),
+                      config.getIncrementColumn()
+              )
+      );
+    }
   }
 
   private void initializeLastVariables() {
-      Map<String, Object> lastSourceOffset = null;
+      Map<String, Object> lastSourceOffset;
       lastSourceOffset = context.offsetStorageReader().offset(sourcePartition());
       if (lastSourceOffset==null) {
           lastNumber = Instant.now();
+          lastIncrement = 0.0;
           //System.out.println("No offset while initializing");
       } else {
           Object lastNumberObj = lastSourceOffset.get(CURRENT_TIME_FIELD);
-          Object lastIncrementObj = lastSourceOffset.get(INCREMENTING_OFFSET);
+          Object lastIncrementObj = lastSourceOffset.get(INCREMENTING_FIELD);
           if (lastNumberObj instanceof String) {
-              lastNumber = Instant.parse((String) lastNumberObj);
+            lastNumber = Instant.parse((String) lastNumberObj);
           }
           if (lastIncrementObj instanceof String) {
             lastIncrement = Double.valueOf((String) lastIncrementObj);
@@ -74,7 +95,6 @@ public class MySourceTask extends SourceTask {
           //System.out.printf("Offset in initializing: %s", lastNumberObj.toString());
       }
   }
-
 
   private Map<String, String> sourcePartition() {
     Map<String, String> map = new HashMap<>();
@@ -86,47 +106,39 @@ public class MySourceTask extends SourceTask {
   private Map<String, String> sourceOffset(Instant curTime, Double offset) {
     Map<String, String> map = new HashMap<>();
     map.put(CURRENT_TIME_FIELD, curTime.toString());
-    map.put(INCREMENTING_OFFSET, offset.toString());
+    map.put(INCREMENTING_FIELD, offset.toString());
     return map;
   }
 
 
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
-    final ArrayList<SourceRecord> records = new ArrayList<>();
+    log.info("Entered polling sate");
     MongoCursor<Document> cursor;
+    final ArrayList<SourceRecord> records = new ArrayList<>();
+
+
     String incrementColumn = config.getIncrementColumn();
-    Map<String, Object> lastOffsetObj = context.offsetStorageReader().offset(sourcePartition());
-    Double lastOffset;
-    if (lastOffsetObj == null) {
-      lastOffset = 0.0;
-    } else {
-      //lastOffset = (Integer) lastOffsetObj.get(INCREMENTING_OFFSET);
-      lastOffset = Double.valueOf((String) lastOffsetObj.get(INCREMENTING_OFFSET));
-    }
 
-    // TODO: implement 'TABLE' and 'QUERY' cases
-    if (this.config.getMongoQueryFilters().isEmpty()) {
-      if (mode.equals("incrementing")) {
-        BasicDBObject gtQuery = new BasicDBObject();
-        gtQuery.put(incrementColumn, new BasicDBObject("$gt", lastOffset));
-        cursor = collection.find(gtQuery).iterator();
-      } else {
-        cursor = collection.find().iterator();
-      }
-
+    int batchMaxRows = config.getBatchSize();
+    final TableQuerier querier = tableQueue.peek();
+    log.info("Getting cursor");
+    if (mode.equals(INCREMENTING_FIELD)) {
+      cursor = querier.getIncrementCursor(lastIncrement);
     } else {
-      BasicDBObject obj = BasicDBObject.parse(this.config.getMongoQueryFilters());
-      cursor = collection.find(obj).iterator();
+      cursor = querier.getBatchCursor();
     }
 
     while (cursor.hasNext()) {
+      log.info("Entered cursor loop");
       String res = cursor.next().toJson();
       JSONObject jsonObj = new JSONObject(res);
-      Double qs = Double.valueOf((Double) jsonObj.get(config.getIncrementColumn()));
-
+      Double qs = Double.valueOf((Double) jsonObj.get(incrementColumn));
       SourceRecord sourceRecord = generateSourceRecord(res, qs);
       records.add(sourceRecord);
+      lastIncrement = qs;
+      resetAndRequeueHead(querier);
+
     }
     cursor.close();
     TimeUnit.SECONDS.sleep(config.getPollInterval());
@@ -162,5 +174,13 @@ public class MySourceTask extends SourceTask {
             null,
             null,
             issue.toString());
+  }
+
+  private void resetAndRequeueHead(TableQuerier expectedHead) {
+    log.debug("Resetting querier {}", expectedHead.toString());
+    TableQuerier removedQuerier = tableQueue.poll();
+    assert removedQuerier == expectedHead;
+    //expectedHead.reset(time.milliseconds());
+    tableQueue.add(expectedHead);
   }
 }
