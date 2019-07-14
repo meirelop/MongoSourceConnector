@@ -97,7 +97,7 @@ public class MySourceConnectorConfig extends AbstractConfig {
             .define(TIMESTAMP_COLUMN_NAME_CONFIG, Type.STRING, Importance.MEDIUM, TIMESTAMP_COLUMN_NAME_DOC);
   }
 
-  public Integer getBatchSize() {
+  public int getBatchSize() {
     return this.getInt(BATCH_SIZE_CONFIG);
   }
 
@@ -131,7 +131,7 @@ public class MySourceConnectorConfig extends AbstractConfig {
 
   public String getIncrementColumn() {return this.getString(INCREMENTING_COLUMN_NAME_CONFIG);}
 
-  public String getTimestampName() {return this.getString(TIMESTAMP_COLUMN_NAME_CONFIG);}
+  public String getTimestampColumn() {return this.getString(TIMESTAMP_COLUMN_NAME_CONFIG);}
 
   public void checkQuery() {
     // TODO: define what to do if query syntax is not correct

@@ -16,12 +16,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
+import com.meirkhan.kafka.utils.DateUtils;
 
 
+import java.text.ParseException;
 import java.util.PriorityQueue;
 import java.util.*;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.text.SimpleDateFormat;
 import org.apache.kafka.common.utils.SystemTime;
 import org.apache.kafka.common.utils.Time;
 
@@ -30,10 +35,8 @@ import static com.meirkhan.kafka.MySchemas.*;
 public class MySourceTask extends SourceTask {
   static final Logger log = LoggerFactory.getLogger(MySourceTask.class);
   public MySourceConnectorConfig config;
-  //public MongoCollection collection;
-  protected Instant lastNumber;
+  protected Instant lastDate;
   protected Double lastIncrement;
-//  protected MongoCursor<Document> cursor;
   String mode;
   private PriorityQueue<TableQuerier> tableQueue = new PriorityQueue<TableQuerier>();
 
@@ -53,17 +56,8 @@ public class MySourceTask extends SourceTask {
 
     this.mode = config.getModeName();
 
-    //MongoClient mongoClient = new MongoClient(config.getMongoHost(), config.getMongoPort());
-    //MongoDatabase database = mongoClient.getDatabase(config.getMongoDbName());
-    //this.collection = database.getCollection(this.config.getMongoCollectionName());
-    initializeLastVariables();
-
     if (mode.equals(INCREMENTING_FIELD)) {
       log.info("Creating IncrementQuerier instance");
-      log.info(config.getMongoHost());
-      log.info(config.getMongoCollectionName());
-      log.info(config.getMongoDbName());
-      log.info(config.getIncrementColumn());
       tableQueue.add(
               new IncrementQuerier(
                       config.getMongoHost(),
@@ -73,6 +67,29 @@ public class MySourceTask extends SourceTask {
                       config.getIncrementColumn()
               )
       );
+      initializeLastVariables();
+    } else if(mode.equals(BATCH_FIELD)) {
+      log.info("Creating BatchQuerier instance");
+      tableQueue.add(
+              new IncrementQuerier(
+                      config.getMongoHost(),
+                      config.getMongoPort(),
+                      config.getMongoDbName(),
+                      config.getMongoCollectionName()
+              )
+      );
+    } else if(mode.equals(TIMESTAMP_FIELD)) {
+      log.info("Creating Timestamp instance");
+      tableQueue.add(
+              new IncrementQuerier(
+                      config.getMongoHost(),
+                      config.getMongoPort(),
+                      config.getMongoDbName(),
+                      config.getMongoCollectionName(),
+                      config.getTimestampColumn()
+              )
+      );
+      initializeLastVariables();
     }
   }
 
@@ -80,20 +97,35 @@ public class MySourceTask extends SourceTask {
       Map<String, Object> lastSourceOffset;
       lastSourceOffset = context.offsetStorageReader().offset(sourcePartition());
       if (lastSourceOffset==null) {
-          lastNumber = Instant.now();
-          lastIncrement = 0.0;
-          //System.out.println("No offset while initializing");
+        lastIncrement = 0.0;
       } else {
-          Object lastNumberObj = lastSourceOffset.get(CURRENT_TIME_FIELD);
-          Object lastIncrementObj = lastSourceOffset.get(INCREMENTING_FIELD);
-          if (lastNumberObj instanceof String) {
-            lastNumber = Instant.parse((String) lastNumberObj);
-          }
-          if (lastIncrementObj instanceof String) {
-            lastIncrement = Double.valueOf((String) lastIncrementObj);
-          }
-          //System.out.printf("Offset in initializing: %s", lastNumberObj.toString());
+        Object lastIncrementObj = lastSourceOffset.get(INCREMENTING_FIELD);
+        if (lastIncrementObj != null && lastIncrementObj instanceof String) {
+          lastIncrement = Double.valueOf((String) lastIncrementObj);
+        }
       }
+
+      if(lastDate==null) {
+        lastDate = (Instant.ofEpochMilli(1));
+      } else {
+        Object lastDateObj = lastSourceOffset.get(LAST_TIME_FIELD);
+        if(lastDateObj != null && lastDateObj instanceof LocalDateTime) {
+//          lastDate = (String) lastDateObj;
+          lastDate = Instant.parse((String) lastDateObj);
+        }
+      }
+
+//      } else {
+//          Object lastNumberObj = lastSourceOffset.get(CURRENT_TIME_FIELD);
+//          Object lastIncrementObj = lastSourceOffset.get(INCREMENTING_FIELD);
+//          if (lastNumberObj instanceof String) {
+////            curDate = Instant.parse((String) lastNumberObj);
+//          }
+//          if (lastIncrementObj instanceof String) {
+//            lastIncrement = Double.valueOf((String) lastIncrementObj);
+//          }
+          //System.out.printf("Offset in initializing: %s", lastNumberObj.toString());
+//      }
   }
 
   private Map<String, String> sourcePartition() {
@@ -103,9 +135,12 @@ public class MySourceTask extends SourceTask {
     return map;
   }
 
-  private Map<String, String> sourceOffset(Instant curTime, Double offset) {
+  private Map<String, String> sourceOffset(Instant record_time, Double offset) {
     Map<String, String> map = new HashMap<>();
-    map.put(CURRENT_TIME_FIELD, curTime.toString());
+    String maxDate = DateUtils.MaxInstant(record_time, lastDate).toString();
+    map.put(LAST_TIME_FIELD, maxDate);
+    System.out.printf("MAAXX DATE: %s", maxDate);
+//    map.put(LAST_TIME_FIELD, curTime.toString());
     map.put(INCREMENTING_FIELD, offset.toString());
     return map;
   }
@@ -113,30 +148,35 @@ public class MySourceTask extends SourceTask {
 
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
-    log.info("Entered polling sate");
     MongoCursor<Document> cursor;
     final ArrayList<SourceRecord> records = new ArrayList<>();
-
-
     String incrementColumn = config.getIncrementColumn();
+    String timestampColumn = config.getTimestampColumn();
 
     int batchMaxRows = config.getBatchSize();
+
     final TableQuerier querier = tableQueue.peek();
-    log.info("Getting cursor");
+    cursor = querier.getBatchCursor();
     if (mode.equals(INCREMENTING_FIELD)) {
       cursor = querier.getIncrementCursor(lastIncrement);
-    } else {
-      cursor = querier.getBatchCursor();
+    } else if (mode.equals(TIMESTAMP_FIELD)){
+        System.out.printf("LLAAAASSST DATE: %s",lastDate.toString());
+        cursor = querier.getTimestampCursor(lastDate);
     }
 
     while (cursor.hasNext()) {
       log.info("Entered cursor loop");
-      String res = cursor.next().toJson();
-      JSONObject jsonObj = new JSONObject(res);
-      Double qs = Double.valueOf((Double) jsonObj.get(incrementColumn));
-      SourceRecord sourceRecord = generateSourceRecord(res, qs);
+      Document res = cursor.next();
+      // TODO: there is no incrementcolumn in case of Batch
+//      JSONObject jsonObj = new JSONObject(res);
+//      Double qs = Double.valueOf((Double) jsonObj.get(incrementColumn));
+      Instant record_time = res.getDate(timestampColumn).toInstant();
+      System.out.printf("DDDATE FROM MONGOOODB: %s", record_time.toString());
+      Double record_id = res.getDouble(incrementColumn);
+      SourceRecord sourceRecord = generateSourceRecord(res, record_id, record_time);
       records.add(sourceRecord);
-      lastIncrement = qs;
+      lastIncrement = record_id;
+      lastDate = DateUtils.MaxInstant(record_time, lastDate);
       resetAndRequeueHead(querier);
 
     }
@@ -151,7 +191,7 @@ public class MySourceTask extends SourceTask {
     //TODO: Do whatever is required to stop your task.
   }
 
-  private SourceRecord generateSourceRecord(Object issue, Double lastIncrID) {
+  private SourceRecord generateSourceRecord(Object record, Double lastIncrID, Instant record_time) {
 //    switch (mode) {
 //      case TABLE:
 //        String name = tableId.tableName(); // backwards compatible
@@ -167,13 +207,13 @@ public class MySourceTask extends SourceTask {
 
     return new SourceRecord(
             sourcePartition(),
-            sourceOffset(Instant.now(), lastIncrID),
+            sourceOffset(record_time, lastIncrID),
             config.getTopic(),
             null, // partition will be inferred by the framework
             null,
             null,
             null,
-            issue.toString());
+            record.toString());
   }
 
   private void resetAndRequeueHead(TableQuerier expectedHead) {

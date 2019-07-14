@@ -9,8 +9,11 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
+import java.util.Date;
+import java.text.ParseException;
 import org.slf4j.Logger;
 import org.bson.Document;
+import java.time.Instant;
 
 abstract class TableQuerier {
     protected MongoCursor<Document> cursor;
@@ -39,7 +42,7 @@ abstract class TableQuerier {
 
     public abstract MongoCursor<Document> getIncrementCursor(Double lastIncrement);
 
-    public abstract MongoCursor<Document> getTimestampCursor();
+    public abstract MongoCursor<Document> getTimestampCursor (Instant lastTimestamp);
 
     public abstract MongoCursor<Document> getIncrementTimestampCursor();
 
