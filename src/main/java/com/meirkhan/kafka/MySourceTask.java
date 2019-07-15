@@ -83,6 +83,22 @@ public class MySourceTask extends SourceTask {
                       lastDate
               )
       );
+    } else if(mode.equals(MySourceConnectorConfig.MODE_TIMESTAMP_INCREMENTING)) {
+      log.info("Creating TimestampIncrementQuerier instance");
+      initializeLastVariables();
+      tableQueue.add(
+              new TimestampIncrementQuerier(
+                      topic,
+                      config.getMongoHost(),
+                      config.getMongoPort(),
+                      config.getMongoDbName(),
+                      config.getMongoCollectionName(),
+                      config.getTimestampColumn(),
+                      lastDate,
+                      config.getIncrementColumn(),
+                      lastIncrement
+              )
+      );
     }
   }
 

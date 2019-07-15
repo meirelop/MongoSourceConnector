@@ -12,47 +12,53 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static com.meirkhan.kafka.MySchemas.*;
+import java.time.Instant;
 import java.util.*;
-import java.lang.Math;
-import org.json.JSONObject;
+import static com.meirkhan.kafka.MySchemas.*;
 
 
-public class IncrementQuerier extends TableQuerier{
+public class TimestampIncrementQuerier extends TableQuerier{
     static final Logger log = LoggerFactory.getLogger(MySourceConnectorConfig.class);
     private String topic;
-    private String incrementColumn;
     private MongoClient mongoClient;
     private MongoDatabase database;
     private MongoCollection collection;
     MongoCursor<Document> cursor;
-    private Double lastIncrement;
-    private Double recordIncrement;
+    private String timestampColumn;
     private String dbName;
     private String collectionName;
+    private Instant lastDate;
+    private Instant recordDate;
+    private Double lastIncrement;
+    private Double recordIncrement;
+    private String incrementColumn;
 
-    public IncrementQuerier
+
+    public TimestampIncrementQuerier
             (
                     String topic,
                     String mongoHost,
                     int mongoPort,
                     String dbName,
                     String collectionName,
+                    String timestampColumn,
+                    Instant lastDate,
                     String incrementColumn,
                     Double lastIncrement
             )
     {
         super(topic, mongoHost,mongoPort,dbName,collectionName);
         this.topic = topic;
-        this.incrementColumn = incrementColumn;
-        this.lastIncrement = lastIncrement;
+        this.timestampColumn = timestampColumn;
         this.dbName = dbName;
         this.collectionName = collectionName;
+        this.lastDate = lastDate;
         this.mongoClient = new MongoClient(mongoHost, mongoPort);
         this.database = mongoClient.getDatabase(dbName);
         this.collection = database.getCollection(collectionName);
+        this.incrementColumn = incrementColumn;
+        this.lastIncrement = lastIncrement;
     }
-
 
     private Map<String, String> sourcePartition() {
         Map<String, String> map = new HashMap<>();
@@ -63,6 +69,8 @@ public class IncrementQuerier extends TableQuerier{
 
     private Map<String, String> sourceOffset() {
         Map<String, String> map = new HashMap<>();
+        lastDate = DateUtils.MaxInstant(lastDate, recordDate);
+        map.put(LAST_TIME_FIELD, lastDate.toString());
         lastIncrement = Math.max(lastIncrement, recordIncrement);
         map.put(INCREMENTING_FIELD, lastIncrement.toString());
         return map;
@@ -70,6 +78,8 @@ public class IncrementQuerier extends TableQuerier{
 
     private BasicDBObject createQuery() {
         List<DBObject> criteria = new ArrayList<>();
+        criteria.add(new BasicDBObject(timestampColumn, new BasicDBObject(MONGO_CMD_GREATER, lastDate)));
+        criteria.add(new BasicDBObject(timestampColumn, new BasicDBObject(MONGO_CMD_TYPE, MONGO_DATE_TYPE)));
         criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(MONGO_CMD_GREATER, lastIncrement)));
         criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(MONGO_CMD_TYPE, MONGO_NUMBER_TYPE)));
         return new BasicDBObject(MONGO_CMD_AND, criteria);
@@ -92,14 +102,14 @@ public class IncrementQuerier extends TableQuerier{
     @Override
     public SourceRecord extractRecord() {
         Document record = cursor.next();
+        recordDate = record.getDate(timestampColumn).toInstant();
         recordIncrement = record.getDouble(incrementColumn);
-        //JSONObject jsonObj = new JSONObject(record);
 
         return new SourceRecord(
                 sourcePartition(),
                 sourceOffset(),
                 topic,
-                null,
+                null, // partition will be inferred by the framework
                 null,
                 null,
                 null,
