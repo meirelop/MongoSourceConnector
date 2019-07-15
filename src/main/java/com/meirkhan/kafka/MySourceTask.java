@@ -110,27 +110,14 @@ public class MySourceTask extends SourceTask {
       } else {
         Object lastDateObj = lastSourceOffset.get(LAST_TIME_FIELD);
         if(lastDateObj != null && lastDateObj instanceof LocalDateTime) {
-//          lastDate = (String) lastDateObj;
           lastDate = Instant.parse((String) lastDateObj);
         }
       }
-
-//      } else {
-//          Object lastNumberObj = lastSourceOffset.get(CURRENT_TIME_FIELD);
-//          Object lastIncrementObj = lastSourceOffset.get(INCREMENTING_FIELD);
-//          if (lastNumberObj instanceof String) {
-////            curDate = Instant.parse((String) lastNumberObj);
-//          }
-//          if (lastIncrementObj instanceof String) {
-//            lastIncrement = Double.valueOf((String) lastIncrementObj);
-//          }
-          //System.out.printf("Offset in initializing: %s", lastNumberObj.toString());
-//      }
   }
 
   private Map<String, String> sourcePartition() {
     Map<String, String> map = new HashMap<>();
-    map.put(DATABASE_NAME_FIELD, this.config.getMongoDbName());
+    map.put(DATABASE_NAME_FIELD, config.getTopicPrefix() + this.config.getMongoDbName());
     map.put(COLLECTION_FIELD, this.config.getMongoCollectionName());
     return map;
   }
@@ -139,8 +126,6 @@ public class MySourceTask extends SourceTask {
     Map<String, String> map = new HashMap<>();
     String maxDate = DateUtils.MaxInstant(record_time, lastDate).toString();
     map.put(LAST_TIME_FIELD, maxDate);
-    System.out.printf("MAAXX DATE: %s", maxDate);
-//    map.put(LAST_TIME_FIELD, curTime.toString());
     map.put(INCREMENTING_FIELD, offset.toString());
     return map;
   }
@@ -160,20 +145,16 @@ public class MySourceTask extends SourceTask {
     if (mode.equals(INCREMENTING_FIELD)) {
       cursor = querier.getIncrementCursor(lastIncrement);
     } else if (mode.equals(TIMESTAMP_FIELD)){
-        System.out.printf("LLAAAASSST DATE: %s",lastDate.toString());
         cursor = querier.getTimestampCursor(lastDate);
     }
 
     while (cursor.hasNext()) {
-      log.info("Entered cursor loop");
       Document res = cursor.next();
       // TODO: there is no incrementcolumn in case of Batch
-//      JSONObject jsonObj = new JSONObject(res);
-//      Double qs = Double.valueOf((Double) jsonObj.get(incrementColumn));
       Instant record_time = res.getDate(timestampColumn).toInstant();
-      System.out.printf("DDDATE FROM MONGOOODB: %s", record_time.toString());
       Double record_id = res.getDouble(incrementColumn);
       SourceRecord sourceRecord = generateSourceRecord(res, record_id, record_time);
+//      SourceRecord sourceRecord = querier.extractRecord();
       records.add(sourceRecord);
       lastIncrement = record_id;
       lastDate = DateUtils.MaxInstant(record_time, lastDate);
@@ -208,7 +189,7 @@ public class MySourceTask extends SourceTask {
     return new SourceRecord(
             sourcePartition(),
             sourceOffset(record_time, lastIncrID),
-            config.getTopic(),
+            config.getTopicPrefix() + config.getMongoCollectionName(),
             null, // partition will be inferred by the framework
             null,
             null,

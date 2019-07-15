@@ -15,8 +15,10 @@ import org.slf4j.LoggerFactory;
 public class MySourceConnectorConfig extends AbstractConfig {
   static final Logger log = LoggerFactory.getLogger(MySourceConnectorConfig.class);
 
-  public static final String TOPIC_CONFIG = "topic";
-  private static final String TOPIC_DOC = "Topic to write to";
+  public static final String TOPIC_PREFIX_CONFIG = "topic.prefix";
+  private static final String TOPIC_PREFIX_DOC =
+          "Prefix to prepend to table names to generate the name of the Kafka topic to publish data "
+                  + "to, or in the case of a custom query, the full name of the topic to publish to.";
 
   public static final String BATCH_SIZE_CONFIG = "batch.size";
   private static final String BATCH_SIZE_DOC = "Number of data points to retrieve at a time. Defaults to 100 (max value)";
@@ -74,7 +76,6 @@ public class MySourceConnectorConfig extends AbstractConfig {
   private static final String TIMESTAMP_COLUMN_NAME_DISPLAY = "Timestamp Column Name";
 
 
-
   public MySourceConnectorConfig(ConfigDef config, Map<String, String> parsedConfig) {
     super(config, parsedConfig);
   }
@@ -85,7 +86,7 @@ public class MySourceConnectorConfig extends AbstractConfig {
 
   public static ConfigDef conf() {
     return new ConfigDef()
-            .define(TOPIC_CONFIG, Type.STRING, Importance.HIGH, TOPIC_DOC)
+            .define(TOPIC_PREFIX_CONFIG, Type.STRING, Importance.HIGH, TOPIC_PREFIX_DOC)
             .define(BATCH_SIZE_CONFIG, Type.INT, 5, new BatchSizeValidator(), Importance.LOW, BATCH_SIZE_DOC)
             .define(MONGO_HOST_CONFIG, Type.STRING, "localhost", Importance.HIGH, MONGO_HOST_CONFIG_DOC)
             .define(MONGO_PORT_CONFIG, Type.INT, 27017, Importance.HIGH, MONGO_PORT_CONFIG_DOC)
@@ -101,8 +102,8 @@ public class MySourceConnectorConfig extends AbstractConfig {
     return this.getInt(BATCH_SIZE_CONFIG);
   }
 
-  public String getTopic() {
-    return this.getString(TOPIC_CONFIG);
+  public String getTopicPrefix() {
+    return this.getString(TOPIC_PREFIX_CONFIG);
   }
 
   public String getMongoHost() {return this.getString(MONGO_HOST_CONFIG);}
