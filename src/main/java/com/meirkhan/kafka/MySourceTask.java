@@ -58,7 +58,6 @@ public class MySourceTask extends SourceTask {
     } else if(mode.equals(MySourceConnectorConfig.MODE_INCREMENTING)) {
       log.info("Creating IncrementQuerier instance");
       initializeLastVariables();
-      log.error(lastIncrement.toString());
       tableQueue.add(
               new IncrementQuerier(
                       topic,
@@ -67,24 +66,20 @@ public class MySourceTask extends SourceTask {
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
                       config.getIncrementColumn(),
-                      null,
-                      lastIncrement,
-                      null
+                      lastIncrement
               )
       );
     } else if(mode.equals(MySourceConnectorConfig.MODE_TIMESTAMP)) {
       log.info("Creating IncrementQuerier instance");
       initializeLastVariables();
       tableQueue.add(
-              new IncrementQuerier(
+              new TimestampQuerier(
                       topic,
                       config.getMongoHost(),
                       config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
-                      null,
                       config.getTimestampColumn(),
-                      null,
                       lastDate
               )
       );

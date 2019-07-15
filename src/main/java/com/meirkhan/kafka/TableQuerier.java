@@ -10,8 +10,10 @@ import org.slf4j.Logger;
 import org.bson.Document;
 import java.time.Instant;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.slf4j.LoggerFactory;
 
 abstract class TableQuerier {
+    static final Logger log = LoggerFactory.getLogger(MySourceConnectorConfig.class);
     protected MongoCursor<Document> cursor;
     private String mongoHost;
     private int mongoPort;
