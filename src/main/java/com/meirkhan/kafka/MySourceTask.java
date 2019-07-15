@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.text.SimpleDateFormat;
 import org.apache.kafka.common.utils.SystemTime;
 import org.apache.kafka.common.utils.Time;
 
@@ -68,7 +67,25 @@ public class MySourceTask extends SourceTask {
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
                       config.getIncrementColumn(),
-                      lastIncrement
+                      null,
+                      lastIncrement,
+                      null
+              )
+      );
+    } else if(mode.equals(MySourceConnectorConfig.MODE_TIMESTAMP)) {
+      log.info("Creating IncrementQuerier instance");
+      initializeLastVariables();
+      tableQueue.add(
+              new IncrementQuerier(
+                      topic,
+                      config.getMongoHost(),
+                      config.getMongoPort(),
+                      config.getMongoDbName(),
+                      config.getMongoCollectionName(),
+                      null,
+                      config.getTimestampColumn(),
+                      null,
+                      lastDate
               )
       );
     }

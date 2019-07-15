@@ -30,10 +30,12 @@ public class IncrementQuerier extends TableQuerier{
     private MongoCollection collection;
     MongoCursor<Document> cursor;
     private Double lastIncrement;
-    private Instant lastTimestamp;
     private String timestampColumn;
     private String dbName;
     private String collectionName;
+    private Instant lastDate;
+    private Instant recordDate;
+    private Double recordIncrement;
 
     public IncrementQuerier
             (
@@ -43,30 +45,23 @@ public class IncrementQuerier extends TableQuerier{
                     String dbName,
                     String collectionName,
                     String incrementColumn,
-                    Double lastIncrement
+                    String timestampColumn,
+                    Double lastIncrement,
+                    Instant lastDate
             )
     {
         super(topic, mongoHost,mongoPort,dbName,collectionName);
         this.topic = topic;
         this.incrementColumn = incrementColumn;
+        this.timestampColumn = timestampColumn;
         this.lastIncrement = lastIncrement;
         this.dbName = dbName;
         this.collectionName = collectionName;
         this.mongoClient = new MongoClient(mongoHost, mongoPort);
         this.database = mongoClient.getDatabase(dbName);
         this.collection = database.getCollection(collectionName);
+        this.lastDate = lastDate;
     }
-
-
-//    public MongoCursor<Document> getTimestampCursor() {
-//        List<DBObject> criteria = new ArrayList<>();
-//        criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(MONGO_CMD_GREATER, lastTimestamp)));
-//        criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(MONGO_CMD_LESS, Instant.now())));
-//        criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(MONGO_CMD_TYPE, MONGO_DATE_TYPE)));
-//        BasicDBObject gtQuery = new BasicDBObject(MONGO_CMD_AND, criteria);
-//        cursor = collection.find(gtQuery).iterator();
-//        return cursor;
-//    }
 
 
     private Map<String, String> sourcePartition() {
@@ -78,19 +73,42 @@ public class IncrementQuerier extends TableQuerier{
 
     private Map<String, String> sourceOffset() {
         Map<String, String> map = new HashMap<>();
-//        String maxDate = DateUtils.MaxInstant(record_time, lastDate).toString();
-//        map.put(LAST_TIME_FIELD, maxDate);
-        map.put(INCREMENTING_FIELD, lastIncrement.toString());
+
+        if(lastDate != null) {
+            String maxDate = DateUtils.MaxInstant(recordDate, lastDate).toString();
+            lastDate = DateUtils.MaxInstant(recordDate, lastDate);
+            map.put(LAST_TIME_FIELD, maxDate);
+        }
+        if(lastIncrement != null) {
+            map.put(INCREMENTING_FIELD, lastIncrement.toString());
+        }
         return map;
     }
 
+
+    public BasicDBObject createQuery() {
+        List<DBObject> criteria = new ArrayList<>();
+        BasicDBObject query = new BasicDBObject();
+
+        if (lastIncrement != null && lastDate != null){
+        } else if(lastIncrement == null) {
+            criteria.add(new BasicDBObject(timestampColumn, new BasicDBObject(MONGO_CMD_GREATER, lastDate)));
+            criteria.add(new BasicDBObject(timestampColumn, new BasicDBObject(MONGO_CMD_LESS, Instant.now())));
+            criteria.add(new BasicDBObject(timestampColumn, new BasicDBObject(MONGO_CMD_TYPE, MONGO_DATE_TYPE)));
+            query = new BasicDBObject(MONGO_CMD_AND, criteria);
+        } else if(lastDate == null) {
+            criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(MONGO_CMD_GREATER, lastIncrement)));
+            criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(MONGO_CMD_TYPE, MONGO_NUMBER_TYPE)));
+            query = new BasicDBObject(MONGO_CMD_AND, criteria);
+        }
+        return query;
+    }
+
+
     public void executeCursor() {
         //collection.find().projection()
-        List<DBObject> criteria = new ArrayList<>();
-        criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(MONGO_CMD_GREATER, lastIncrement)));
-        criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(MONGO_CMD_TYPE, MONGO_NUMBER_TYPE)));
-        BasicDBObject gtQuery = new BasicDBObject(MONGO_CMD_AND, criteria);
-        cursor = collection.find(gtQuery).iterator();
+        BasicDBObject query = createQuery();
+        cursor = collection.find(query).iterator();
     }
 
     public void closeCursor(){
@@ -104,7 +122,15 @@ public class IncrementQuerier extends TableQuerier{
     @Override
     public SourceRecord extractRecord() {
         Document record = cursor.next();
-        lastIncrement = record.getDouble(incrementColumn);
+
+        if(lastIncrement != null) {
+            lastIncrement = record.getDouble(incrementColumn);
+        }
+
+        if(lastDate != null) {
+            recordDate = record.getDate(timestampColumn).toInstant();
+        }
+
         return new SourceRecord(
                 sourcePartition(),
                 sourceOffset(),
