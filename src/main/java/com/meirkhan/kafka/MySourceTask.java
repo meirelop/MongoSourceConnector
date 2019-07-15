@@ -1,25 +1,13 @@
 package com.meirkhan.kafka;
 
-
-import com.mongodb.DBObject;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.common.protocol.types.Field;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.apache.kafka.connect.errors.ConnectException;
-import org.bson.Document;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.mongodb.BasicDBObject;
-import com.mongodb.MongoClient;
 import com.meirkhan.kafka.utils.DateUtils;
-
-
-import java.text.ParseException;
 import java.util.PriorityQueue;
 import java.util.*;
 import java.util.Date;
@@ -37,7 +25,6 @@ public class MySourceTask extends SourceTask {
   public MySourceConnectorConfig config;
   protected Instant lastDate;
   protected Double lastIncrement;
-  String mode;
   private PriorityQueue<TableQuerier> tableQueue = new PriorityQueue<TableQuerier>();
 
   @Override
@@ -47,55 +34,50 @@ public class MySourceTask extends SourceTask {
 
   @Override
   public void start(Map<String, String> map) {
-    log.info("Starting MongoDB source task");
+    log.debug("Starting MongoDB source task");
     try {
       config = new MySourceConnectorConfig(map);
     } catch (ConfigException e) {
       throw new ConnectException("Couldn't start MongoDBSourceTask due to configuration error", e);
     }
 
-    this.mode = config.getModeName();
+    String mode = config.getModeName();
+    String topic = config.getTopicPrefix() + config.getMongoCollectionName();
 
-    if (mode.equals(INCREMENTING_FIELD)) {
-      log.info("Creating IncrementQuerier instance");
-      tableQueue.add(
-              new IncrementQuerier(
-                      config.getMongoHost(),
-                      config.getMongoPort(),
-                      config.getMongoDbName(),
-                      config.getMongoCollectionName(),
-                      config.getIncrementColumn()
-              )
-      );
-      initializeLastVariables();
-    } else if(mode.equals(BATCH_FIELD)) {
+
+    if(mode.equals(MySourceConnectorConfig.MODE_BULK)) {
       log.info("Creating BatchQuerier instance");
       tableQueue.add(
-              new IncrementQuerier(
+              new BulkCollectionQuerier(
+                      topic,
                       config.getMongoHost(),
                       config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName()
               )
       );
-    } else if(mode.equals(TIMESTAMP_FIELD)) {
-      log.info("Creating Timestamp instance");
+    } else if(mode.equals(MySourceConnectorConfig.MODE_INCREMENTING)) {
+      log.info("Creating IncrementQuerier instance");
+      initializeLastVariables();
+      log.error(lastIncrement.toString());
       tableQueue.add(
               new IncrementQuerier(
+                      topic,
                       config.getMongoHost(),
                       config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
-                      config.getTimestampColumn()
+                      config.getIncrementColumn(),
+                      lastIncrement
               )
       );
-      initializeLastVariables();
     }
   }
 
   private void initializeLastVariables() {
       Map<String, Object> lastSourceOffset;
       lastSourceOffset = context.offsetStorageReader().offset(sourcePartition());
+
       if (lastSourceOffset==null) {
         lastIncrement = 0.0;
       } else {
@@ -117,53 +99,32 @@ public class MySourceTask extends SourceTask {
 
   private Map<String, String> sourcePartition() {
     Map<String, String> map = new HashMap<>();
-    map.put(DATABASE_NAME_FIELD, config.getTopicPrefix() + this.config.getMongoDbName());
-    map.put(COLLECTION_FIELD, this.config.getMongoCollectionName());
-    return map;
-  }
-
-  private Map<String, String> sourceOffset(Instant record_time, Double offset) {
-    Map<String, String> map = new HashMap<>();
-    String maxDate = DateUtils.MaxInstant(record_time, lastDate).toString();
-    map.put(LAST_TIME_FIELD, maxDate);
-    map.put(INCREMENTING_FIELD, offset.toString());
+    map.put(DATABASE_NAME_FIELD, config.getMongoDbName());
+    map.put(COLLECTION_FIELD, config.getMongoCollectionName());
     return map;
   }
 
 
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
-    MongoCursor<Document> cursor;
     final ArrayList<SourceRecord> records = new ArrayList<>();
-    String incrementColumn = config.getIncrementColumn();
-    String timestampColumn = config.getTimestampColumn();
-
     int batchMaxRows = config.getBatchSize();
-
     final TableQuerier querier = tableQueue.peek();
-    cursor = querier.getBatchCursor();
-    if (mode.equals(INCREMENTING_FIELD)) {
-      cursor = querier.getIncrementCursor(lastIncrement);
-    } else if (mode.equals(TIMESTAMP_FIELD)){
-        cursor = querier.getTimestampCursor(lastDate);
+
+    if(querier != null) {
+      querier.executeCursor();
+      while (querier.hasNext()) {
+        SourceRecord record = querier.extractRecord();
+        records.add(record);
+        resetAndRequeueHead(querier);
+      }
     }
 
-    while (cursor.hasNext()) {
-      Document res = cursor.next();
-      // TODO: there is no incrementcolumn in case of Batch
-      Instant record_time = res.getDate(timestampColumn).toInstant();
-      Double record_id = res.getDouble(incrementColumn);
-      SourceRecord sourceRecord = generateSourceRecord(res, record_id, record_time);
-//      SourceRecord sourceRecord = querier.extractRecord();
-      records.add(sourceRecord);
-      lastIncrement = record_id;
-      lastDate = DateUtils.MaxInstant(record_time, lastDate);
-      resetAndRequeueHead(querier);
-
+    if(querier != null) {
+      querier.closeCursor();
     }
-    cursor.close();
+
     TimeUnit.SECONDS.sleep(config.getPollInterval());
-    System.out.println(context.offsetStorageReader().offset(sourcePartition()));
     return records;
   }
 
@@ -172,30 +133,6 @@ public class MySourceTask extends SourceTask {
     //TODO: Do whatever is required to stop your task.
   }
 
-  private SourceRecord generateSourceRecord(Object record, Double lastIncrID, Instant record_time) {
-//    switch (mode) {
-//      case TABLE:
-//        String name = tableId.tableName(); // backwards compatible
-//        partition = Collections.singletonMap(JdbcSourceConnectorConstants.TABLE_NAME_KEY, name);
-//        topic = topicPrefix + name;
-//        break;
-//      case QUERY:
-//        partition = Collections.singletonMap(JdbcSourceConnectorConstants.QUERY_NAME_KEY
-//        topic = topicPrefix;
-//        break;
-//      default:
-//        throw new ConnectException("Unexpected query mode: " + mode);
-
-    return new SourceRecord(
-            sourcePartition(),
-            sourceOffset(record_time, lastIncrID),
-            config.getTopicPrefix() + config.getMongoCollectionName(),
-            null, // partition will be inferred by the framework
-            null,
-            null,
-            null,
-            record.toString());
-  }
 
   private void resetAndRequeueHead(TableQuerier expectedHead) {
     log.debug("Resetting querier {}", expectedHead.toString());

@@ -6,7 +6,7 @@ public class MySchemas {
     public static final String COLLECTION_FIELD = "collection";
     public static final String LAST_TIME_FIELD = "lasttime";
     public static final String INCREMENTING_FIELD = "incrementing";
-    public static final String BATCH_FIELD = "batch";
+    public static final String BATCH_FIELD = "bulk";
     public static final String TIMESTAMP_FIELD = "timestamp";
     public static final String MONGO_CMD_TYPE = "$type";
     public static final String MONGO_NUMBER_TYPE = "number";
