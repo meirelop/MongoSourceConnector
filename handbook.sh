@@ -62,13 +62,22 @@ db.products.insert( { _id: 10, item: "pen", qty: 40 } )
 db.table.insert( [{ _id: 12, item: "pen", qty: 40, "incr":3 },
                     { _id: 13, item: "pen", qty: 40, "incr":4 }])
 
-db.table1.insert({_id:1124, item: "qwe", incr:1, time:ISODate("2016-11-02T06:49:48.273+01:00")})
-db.table1.insert({_id:1125, item: "qwqwe", incr:2, time:ISODate("2016-12-02T06:49:48.273+01:00")})
 
 db.table4.insert({_id:1127, item: "qwqwgaaae", incr:5, time:ISODate("2018-11-02")});
 
+for (var i = 1; i <= 25; i++) {
+   db.testData.insert( { x : i } )
+}
 
 db.table4.find({"time" : { $gte : new ISODate("2017-01-12T20:15:31Z") }});
+
+
+db.transaction.find({
+        "header.final.core.data.creationDate": {
+            $gte: ISODate("2019-06-27"),
+            $lt: ISODate("2019-07-03")
+        }
+    })
 
 
 
@@ -186,6 +195,7 @@ Error handling:
 1. Was not given incrementing column, or was given wrong one
 2. Query syntax is not correct
 3. in "Timestamp" mode, column has to be type of Timestamp
+4. if mode was written wrong
 
 
 # quickstart Kafka
@@ -211,5 +221,12 @@ bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic test --from
 //TODO
 1. Type casting for "increment.column" which can handle any number type. Currently it can handle double
 2. Type casting for "timestamp.column"
-3. MongoDB projections does not work if passed as string input parameter, need to build from API
 4. do not repeat poll if offset is null and already was produced
+5. implement topic.prefix
+7. in JDBC, if user does not specify the query, all the tables in DB will be exported to Kafka
+8. add authenticating mongodb User
+9. It is possible also to control the tables pulled back by the connector, using the table.whitelist (“only include”) or table.blacklist (“include everything but”) configuration.
+10. Implement schema for record keys and values
+12. Mongodb uri instead of separate port and host
+13. Mongo projections (Table and Query)
+14. Add timezone parameter

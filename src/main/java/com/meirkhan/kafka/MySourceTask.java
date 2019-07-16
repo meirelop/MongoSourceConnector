@@ -135,15 +135,16 @@ public class MySourceTask extends SourceTask {
 
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
-    final ArrayList<SourceRecord> records = new ArrayList<>();
+    TimeUnit.SECONDS.sleep(config.getPollInterval());
+    final ArrayList<SourceRecord> results = new ArrayList<>();
     int batchMaxRows = config.getBatchSize();
     final TableQuerier querier = tableQueue.peek();
 
     if(querier != null) {
       querier.executeCursor();
-      while (querier.hasNext()) {
+      while (results.size() < batchMaxRows && querier.hasNext()) {
         SourceRecord record = querier.extractRecord();
-        records.add(record);
+        results.add(record);
         resetAndRequeueHead(querier);
       }
     }
@@ -152,8 +153,7 @@ public class MySourceTask extends SourceTask {
       querier.closeCursor();
     }
 
-    TimeUnit.SECONDS.sleep(config.getPollInterval());
-    return records;
+    return results;
   }
 
   @Override
