@@ -65,9 +65,7 @@ db.table.insert( [{ _id: 12, item: "pen", qty: 40, "incr":3 },
 
 db.table4.insert({_id:1127, item: "qwqwgaaae", incr:5, time:ISODate("2018-11-02")});
 
-for (var i = 1; i <= 25; i++) {
-   db.testData.insert( { x : i } )
-}
+for (var i = 26; i <= 3000; i++) { db.testData.insert( { x : i } ) }
 
 db.table4.find({"time" : { $gte : new ISODate("2017-01-12T20:15:31Z") }});
 
@@ -78,8 +76,40 @@ db.transaction.find({
             $lt: ISODate("2019-07-03")
         }
     })
+--------------- Mongo Credentials--------------------
+sudo chown -R meirkhan /data/db
+mongod --auth
+sudo nano /etc/mongodb.conf
+uncommented auth=true
 
+-- admin user
+use admin
+db.createUser(
+  {
+    user: "useradmin",
+    pwd: "thepianohasbeendrinking",
+    roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]
+  }
+)
+db.auth("useradmin","thepianohasbeendrinking")
 
+--test user
+use test
+db.createUser(
+  {
+    user: "testuser",
+    pwd: "pwd1",
+    roles: [ { role: "readWrite", db: "test" } ]
+  }
+)
+db.auth("testuser","pwd1")
+
+-- OTHER OPTIONS
+mongo localhost:27017/admin -u admin -p SECRETPASSWORD
+mongo -u YourUserName -p YourPassword admin
+> use admin
+switched to db admin
+> db.auth('admin','SECRETPASSWORD');
 
 db.transactions.insert(
    [{  "dateTime":"2016-11-02T06:49:48.256+01:00",  "OperationName":"UPDATE",  "TableName":"MMONEY.USER_PHONES",  "data":{"USER_PHONES_ID":"341370", "INVALID_PIN_COUNT":"0"},  "before":{"USER_PHONES_ID":"341370", "INVALID_PIN_COUNT":"0"} },
@@ -126,6 +156,45 @@ OperationName":"INSERT",  "TableName":"SYN_MMONEY.MTX_TRANSACTION_HEADER",  "dat
 {  "dateTime":"2016-11-02T06:49:48.503+01:00",  "OperationName":"INSERT",  "TableName":"MMONEY.SENTSMS",  "data":{"MESSAGE":"Vous avez envoye 101.00 FCFA au 79047579 et vous avez recu une commission de 0.00 FCFA. Votre nouveau solde est de 98181895.00 FCFA", "STATUS":"Y", "MSISDN":"77990438", "RETRY_COUNT":"0", "REFERENCE":"CI161102.0649.B23172", "DELIVEREDON":"2016-11-02T06:49:48.000+01:00", "CREATED_ON":"2016-11-02T06:49:48.000+01:00", "IS_DELIVERED":"N", "ID":"SM161102.0649.B74124"},  "before":"null" },
 {  "dateTime":"2016-11-02T06:49:48.509+01:00",  "OperationName":"INSERT",  "TableName":"MMONEY.SENTSMS",  "data":{"MESSAGE":"Depot de 101.00 FCFA effectue par 77990438. Votre nouveau solde est de 100109488.00 FCFA. Solde maximum autorise : 1.500.000 FCFA", "STATUS":"Y", "MSISDN":"79047579", "RETRY_COUNT":"0", "REFERENCE":"CI161102.0649.B23172", "DELIVEREDON":"2016-11-02T06:49:48.000+01:00", "CREATED_ON":"2016-11-02T06:49:48.000+01:00", "IS_DELIVERED":"N", "ID":"SM161102.0649.B74125"},  "before":"null" }]
 )
+
+
+------------------------------------- DEBEZIUM MongoDB Source instructions ----------------------------------------------
+1. Download tar.gz debezium plugin
+2. Create dir /usr/local/share/kafka/plugins
+3. unzip tar.gz
+4. Change Kafka Connect worker configs in "etc/schema-registry/connect-avro-standalone.properties" (in this case), added "plugin.path=/usr/local/share/java,usr/local/share/kafka/plugins"
+5. Export CLASSPATH in ~/.bashrc, CLASSPATH=/usr/local/share/kafka/plugins/debezium-connector-mongodb/*
+6. Download mongodb
+7. Create file "connect-mongo-source.properties" on directory /usr/local/confluent-5.2.1/etc/kafka and specify details
+8. ----------------------MongoDB configurations
+8.1. create db dirs: mkdir -p /srv/mongodb/rs0-0  /srv/mongodb/rs0-1 /srv/mongodb/rs0-2
+8.2. give write permissons: sudo chmod -R go+w /srv/mongodb/
+8.3. start rs instances: mongod --replSet rs0 --port 27017 --bind_ip localhost --dbpath /srv/mongodb/rs0-0 --smallfiles --oplogSize 128
+ 					     mongod --replSet rs0 --port 27018 --bind_ip localhost --dbpath /srv/mongodb/rs0-1 --smallfiles --oplogSize 128
+ 					     mongod --replSet rs0 --port 27019 --bind_ip localhost --dbpath /srv/mongodb/rs0-2 --smallfiles --oplogSize 128
+8.4. open replica clients: mongo --port 27017, mongo --port 27018, mongo --port 27019
+8.5. In primary client, specify rs configurations
+rsconf = {
+  _id: "rs0",
+  members: [
+    {
+     _id: 0,
+     host: "localhost:27017"
+    },
+    {
+     _id: 1,
+     host: "localhost:27018"
+    },
+    {
+     _id: 2,
+     host: "localhost:27019"
+    }
+   ]
+}
+8.6. rs.initiate(rsconf)
+8.7. create db and insert: create db - "use test", insert - "db.users.insert({username:"mkyong",password:"123456"})"
+9. start Connect: bin/connect-standalone etc/schema-registry/connect-avro-standalone.properties etc/kafka/connect-mongo-source.properties
+10. start consuming changes: bin/kafka-avro-console-consumer --bootstrap-server localhost:9092 --topic test.test.users --from-beginning
 
 
 Links:
@@ -195,7 +264,8 @@ Error handling:
 1. Was not given incrementing column, or was given wrong one
 2. Query syntax is not correct
 3. in "Timestamp" mode, column has to be type of Timestamp
-4. if mode was written wrong
+4. if mode was written wrong syntactically
+5. no input parameter
 
 
 # quickstart Kafka
@@ -230,3 +300,4 @@ bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic test --from
 12. Mongodb uri instead of separate port and host
 13. Mongo projections (Table and Query)
 14. Add timezone parameter
+15. Bulk mode every time repeates first batch-size records
