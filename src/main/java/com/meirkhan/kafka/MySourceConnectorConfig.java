@@ -23,6 +23,9 @@ public class MySourceConnectorConfig extends AbstractConfig {
   public static final String BATCH_SIZE_CONFIG = "batch.size";
   private static final String BATCH_SIZE_DOC = "Number of data points to retrieve at a time. Defaults to 100 (max value)";
 
+  public static final String MONGO_URI_CONFIG = "mongo.uri";
+  private static final String MONGO_URI_CONFIG_DOC = "MongoDB connection uri";
+
   public static final String MONGO_HOST_CONFIG = "mongo.host";
   private static final String MONGO_HOST_CONFIG_DOC = "MongoDB connection host";
 
@@ -87,15 +90,16 @@ public class MySourceConnectorConfig extends AbstractConfig {
   public static ConfigDef conf() {
     return new ConfigDef()
             .define(TOPIC_PREFIX_CONFIG, Type.STRING, Importance.HIGH, TOPIC_PREFIX_DOC)
-            .define(BATCH_SIZE_CONFIG, Type.INT, 5, new BatchSizeValidator(), Importance.LOW, BATCH_SIZE_DOC)
+            .define(BATCH_SIZE_CONFIG, Type.INT, 100, new BatchSizeValidator(), Importance.LOW, BATCH_SIZE_DOC)
             .define(MONGO_HOST_CONFIG, Type.STRING, "localhost", Importance.HIGH, MONGO_HOST_CONFIG_DOC)
             .define(MONGO_PORT_CONFIG, Type.INT, 27017, Importance.HIGH, MONGO_PORT_CONFIG_DOC)
             .define(MONGO_DB_CONFIG, Type.STRING, Importance.HIGH, MONGO_DB_CONFIG_DOC)
             .define(MONGO_QUERY_CONFIG, Type.STRING, Importance.HIGH, MONGO_QUERY_CONFIG_DOC)
-            .define(POLL_INTERVAL_CONFIG, Type.INT, 1, Importance.HIGH, POLL_INTERVAL_CONFIG_DOC)
+            .define(POLL_INTERVAL_CONFIG, Type.INT, 60, Importance.HIGH, POLL_INTERVAL_CONFIG_DOC)
             .define(MODE_CONFIG, Type.STRING, Importance.MEDIUM, MODE_CONFIG_DOC)
             .define(INCREMENTING_COLUMN_NAME_CONFIG, Type.STRING, Importance.MEDIUM, INCREMENTING_COLUMN_NAME_DOC)
-            .define(TIMESTAMP_COLUMN_NAME_CONFIG, Type.STRING, Importance.MEDIUM, TIMESTAMP_COLUMN_NAME_DOC);
+            .define(TIMESTAMP_COLUMN_NAME_CONFIG, Type.STRING, Importance.MEDIUM, TIMESTAMP_COLUMN_NAME_DOC)
+            .define(MONGO_URI_CONFIG, Type.STRING,"" ,Importance.MEDIUM, MONGO_URI_CONFIG_DOC);
   }
 
   public int getBatchSize() {
@@ -105,6 +109,8 @@ public class MySourceConnectorConfig extends AbstractConfig {
   public String getTopicPrefix() {
     return this.getString(TOPIC_PREFIX_CONFIG);
   }
+
+  public String getMongoUri() {return this.getString(MONGO_URI_CONFIG); }
 
   public String getMongoHost() {return this.getString(MONGO_HOST_CONFIG);}
 

@@ -5,6 +5,7 @@ import com.meirkhan.kafka.utils.DateUtils;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -34,6 +35,7 @@ public class IncrementQuerier extends TableQuerier{
     public IncrementQuerier
             (
                     String topic,
+                    String mongoUri,
                     String mongoHost,
                     int mongoPort,
                     String dbName,
@@ -42,13 +44,17 @@ public class IncrementQuerier extends TableQuerier{
                     Double lastIncrement
             )
     {
-        super(topic, mongoHost,mongoPort,dbName,collectionName);
+        super(topic, mongoUri, mongoHost,mongoPort,dbName,collectionName);
         this.topic = topic;
         this.incrementColumn = incrementColumn;
         this.lastIncrement = lastIncrement;
         this.dbName = dbName;
         this.collectionName = collectionName;
-        this.mongoClient = new MongoClient(mongoHost, mongoPort);
+        if(!mongoUri.isEmpty()) {
+            this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
+        } else {
+            this.mongoClient = new MongoClient(mongoHost,mongoPort);
+        }
         this.database = mongoClient.getDatabase(dbName);
         this.collection = database.getCollection(collectionName);
     }
@@ -93,7 +99,6 @@ public class IncrementQuerier extends TableQuerier{
     public SourceRecord extractRecord() {
         Document record = cursor.next();
         recordIncrement = record.getDouble(incrementColumn);
-        //JSONObject jsonObj = new JSONObject(record);
 
         return new SourceRecord(
                 sourcePartition(),
@@ -103,6 +108,6 @@ public class IncrementQuerier extends TableQuerier{
                 null,
                 null,
                 null,
-                record.toString());
+                record.toJson());
     }
 }

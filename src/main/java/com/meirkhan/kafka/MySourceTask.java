@@ -1,22 +1,16 @@
 package com.meirkhan.kafka;
 
 import org.apache.kafka.common.config.ConfigException;
-import org.apache.kafka.common.protocol.types.Field;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.meirkhan.kafka.utils.DateUtils;
 import java.util.PriorityQueue;
 import java.util.*;
-import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import org.apache.kafka.common.utils.SystemTime;
-import org.apache.kafka.common.utils.Time;
-
 import static com.meirkhan.kafka.MySchemas.*;
 
 public class MySourceTask extends SourceTask {
@@ -49,6 +43,7 @@ public class MySourceTask extends SourceTask {
       tableQueue.add(
               new BulkCollectionQuerier(
                       topic,
+                      config.getMongoUri(),
                       config.getMongoHost(),
                       config.getMongoPort(),
                       config.getMongoDbName(),
@@ -61,6 +56,7 @@ public class MySourceTask extends SourceTask {
       tableQueue.add(
               new IncrementQuerier(
                       topic,
+                      config.getMongoUri(),
                       config.getMongoHost(),
                       config.getMongoPort(),
                       config.getMongoDbName(),
@@ -75,6 +71,7 @@ public class MySourceTask extends SourceTask {
       tableQueue.add(
               new TimestampQuerier(
                       topic,
+                      config.getMongoUri(),
                       config.getMongoHost(),
                       config.getMongoPort(),
                       config.getMongoDbName(),
@@ -89,6 +86,7 @@ public class MySourceTask extends SourceTask {
       tableQueue.add(
               new TimestampIncrementQuerier(
                       topic,
+                      config.getMongoUri(),
                       config.getMongoHost(),
                       config.getMongoPort(),
                       config.getMongoDbName(),
@@ -147,18 +145,13 @@ public class MySourceTask extends SourceTask {
         results.add(record);
         resetAndRequeueHead(querier);
       }
-    }
-
-    if(querier != null) {
       querier.closeCursor();
     }
-
     return results;
   }
 
   @Override
   public void stop() {
-    //TODO: Do whatever is required to stop your task.
   }
 
 

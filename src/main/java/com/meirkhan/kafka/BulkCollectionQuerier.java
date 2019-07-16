@@ -1,6 +1,7 @@
 package com.meirkhan.kafka;
 
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -23,17 +24,23 @@ public class BulkCollectionQuerier extends TableQuerier{
     private MongoCollection collection;
     private String topic;
 
+
     public BulkCollectionQuerier(String topic,
+                                 String mongoUri,
                                  String mongoHost,
                                  int mongoPort,
                                  String dbName,
                                  String collectionName
                                  ) {
-        super(topic, mongoHost,mongoPort,dbName,collectionName);
+        super(topic,mongoUri, mongoHost,mongoPort,dbName,collectionName);
         this.topic = topic;
         this.collectionName = collectionName;
         this.dbName = dbName;
-        this.mongoClient = new MongoClient(mongoHost, mongoPort);
+        if(!mongoUri.isEmpty()) {
+            this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
+        } else {
+            this.mongoClient = new MongoClient(mongoHost,mongoPort);
+        }
         this.database = mongoClient.getDatabase(dbName);
         this.collection = database.getCollection(collectionName);
     }
@@ -68,6 +75,6 @@ public class BulkCollectionQuerier extends TableQuerier{
                 null,
                 null,
                 null,
-                record.toString());
+                record.toJson());
     }
 }

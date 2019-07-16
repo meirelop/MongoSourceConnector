@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 abstract class TableQuerier {
     static final Logger log = LoggerFactory.getLogger(MySourceConnectorConfig.class);
     protected MongoCursor<Document> cursor;
+    private String mongoUri;
     private String mongoHost;
     private int mongoPort;
     private String dbName;
@@ -26,12 +27,14 @@ abstract class TableQuerier {
 
     public TableQuerier(
                         String topic,
+                        String mongoUri,
                         String mongoHost,
                         int mongoPort,
                         String dbName,
                         String collectionName
                         )
     {   this.topic = topic;
+        this.mongoUri = mongoUri;
         this.mongoHost = mongoHost;
         this.mongoPort = mongoPort;
         this.dbName = dbName;

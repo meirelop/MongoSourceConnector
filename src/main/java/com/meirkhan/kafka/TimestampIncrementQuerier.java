@@ -5,6 +5,7 @@ import com.meirkhan.kafka.utils.DateUtils;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -33,10 +34,10 @@ public class TimestampIncrementQuerier extends TableQuerier{
     private Double recordIncrement;
     private String incrementColumn;
 
-
     public TimestampIncrementQuerier
             (
                     String topic,
+                    String mongoUri,
                     String mongoHost,
                     int mongoPort,
                     String dbName,
@@ -47,13 +48,17 @@ public class TimestampIncrementQuerier extends TableQuerier{
                     Double lastIncrement
             )
     {
-        super(topic, mongoHost,mongoPort,dbName,collectionName);
+        super(topic, mongoUri, mongoHost,mongoPort,dbName,collectionName);
         this.topic = topic;
         this.timestampColumn = timestampColumn;
         this.dbName = dbName;
         this.collectionName = collectionName;
         this.lastDate = lastDate;
-        this.mongoClient = new MongoClient(mongoHost, mongoPort);
+        if(!mongoUri.isEmpty()) {
+            this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
+        } else {
+            this.mongoClient = new MongoClient(mongoHost,mongoPort);
+        }
         this.database = mongoClient.getDatabase(dbName);
         this.collection = database.getCollection(collectionName);
         this.incrementColumn = incrementColumn;
@@ -113,6 +118,6 @@ public class TimestampIncrementQuerier extends TableQuerier{
                 null,
                 null,
                 null,
-                record.toString());
+                record.toJson());
     }
 }
