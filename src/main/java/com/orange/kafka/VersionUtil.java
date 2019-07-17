@@ -1,4 +1,4 @@
-package com.meirkhan.kafka;
+package com.orange.kafka;
 
 /**
  * Created by jeremy on 5/3/16.

@@ -65,7 +65,7 @@ db.table.insert( [{ _id: 12, item: "pen", qty: 40, "incr":3 },
 
 db.table4.insert({_id:1127, item: "qwqwgaaae", incr:5, time:ISODate("2018-11-02")});
 
-for (var i = 26; i <= 3000; i++) { db.testData.insert( { x : i } ) }
+for (var i = 1; i <= 1000; i++) { db.test2.insert( { incr : i } ) }
 
 db.table4.find({"time" : { $gte : new ISODate("2017-01-12T20:15:31Z") }});
 

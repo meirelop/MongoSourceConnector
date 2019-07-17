@@ -1,4 +1,4 @@
-package com.meirkhan.kafka.utils;
+package com.orange.kafka.utils;
 
 import java.time.Instant;
 

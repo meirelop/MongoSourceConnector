@@ -1,4 +1,4 @@
-package com.meirkhan.kafka;
+package com.orange.kafka;
 
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.source.SourceRecord;
@@ -11,11 +11,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import static com.meirkhan.kafka.MySchemas.*;
 
-public class MySourceTask extends SourceTask {
-  static final Logger log = LoggerFactory.getLogger(MySourceTask.class);
-  public MySourceConnectorConfig config;
+public class MongodbSourceTask extends SourceTask {
+  static final Logger log = LoggerFactory.getLogger(MongodbSourceTask.class);
+  public MongodbSourceConnectorConfig config;
   protected Instant lastDate;
   protected Double lastIncrement;
   private PriorityQueue<TableQuerier> tableQueue = new PriorityQueue<TableQuerier>();
@@ -29,7 +28,7 @@ public class MySourceTask extends SourceTask {
   public void start(Map<String, String> map) {
     log.debug("Starting MongoDB source task");
     try {
-      config = new MySourceConnectorConfig(map);
+      config = new MongodbSourceConnectorConfig(map);
     } catch (ConfigException e) {
       throw new ConnectException("Couldn't start MongoDBSourceTask due to configuration error", e);
     }
@@ -38,7 +37,7 @@ public class MySourceTask extends SourceTask {
     String topic = config.getTopicPrefix() + config.getMongoCollectionName();
 
 
-    if(mode.equals(MySourceConnectorConfig.MODE_BULK)) {
+    if(mode.equals(MongodbSourceConnectorConfig.MODE_BULK)) {
       log.info("Creating BatchQuerier instance");
       tableQueue.add(
               new BulkCollectionQuerier(
@@ -50,7 +49,7 @@ public class MySourceTask extends SourceTask {
                       config.getMongoCollectionName()
               )
       );
-    } else if(mode.equals(MySourceConnectorConfig.MODE_INCREMENTING)) {
+    } else if(mode.equals(MongodbSourceConnectorConfig.MODE_INCREMENTING)) {
       log.info("Creating IncrementQuerier instance");
       initializeLastVariables();
       tableQueue.add(
@@ -65,7 +64,7 @@ public class MySourceTask extends SourceTask {
                       lastIncrement
               )
       );
-    } else if(mode.equals(MySourceConnectorConfig.MODE_TIMESTAMP)) {
+    } else if(mode.equals(MongodbSourceConnectorConfig.MODE_TIMESTAMP)) {
       log.info("Creating IncrementQuerier instance");
       initializeLastVariables();
       tableQueue.add(
@@ -80,7 +79,7 @@ public class MySourceTask extends SourceTask {
                       lastDate
               )
       );
-    } else if(mode.equals(MySourceConnectorConfig.MODE_TIMESTAMP_INCREMENTING)) {
+    } else if(mode.equals(MongodbSourceConnectorConfig.MODE_TIMESTAMP_INCREMENTING)) {
       log.info("Creating TimestampIncrementQuerier instance");
       initializeLastVariables();
       tableQueue.add(
@@ -107,7 +106,7 @@ public class MySourceTask extends SourceTask {
       if (lastSourceOffset==null) {
         lastIncrement = 0.0;
       } else {
-        Object lastIncrementObj = lastSourceOffset.get(INCREMENTING_FIELD);
+        Object lastIncrementObj = lastSourceOffset.get(Constants.INCREMENTING_FIELD);
         if (lastIncrementObj != null && lastIncrementObj instanceof String) {
           lastIncrement = Double.valueOf((String) lastIncrementObj);
         }
@@ -116,7 +115,7 @@ public class MySourceTask extends SourceTask {
       if(lastDate==null) {
         lastDate = (Instant.ofEpochMilli(1));
       } else {
-        Object lastDateObj = lastSourceOffset.get(LAST_TIME_FIELD);
+        Object lastDateObj = lastSourceOffset.get(Constants.LAST_TIME_FIELD);
         if(lastDateObj != null && lastDateObj instanceof LocalDateTime) {
           lastDate = Instant.parse((String) lastDateObj);
         }
@@ -125,8 +124,8 @@ public class MySourceTask extends SourceTask {
 
   private Map<String, String> sourcePartition() {
     Map<String, String> map = new HashMap<>();
-    map.put(DATABASE_NAME_FIELD, config.getMongoDbName());
-    map.put(COLLECTION_FIELD, config.getMongoCollectionName());
+    map.put(Constants.DATABASE_NAME_FIELD, config.getMongoDbName());
+    map.put(Constants.COLLECTION_FIELD, config.getMongoCollectionName());
     return map;
   }
 

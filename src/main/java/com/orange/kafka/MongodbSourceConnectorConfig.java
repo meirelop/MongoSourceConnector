@@ -1,7 +1,6 @@
-package com.meirkhan.kafka;
+package com.orange.kafka;
 
-import com.meirkhan.kafka.Validators.BatchSizeValidator;
-import com.meirkhan.kafka.Validators.TimestampValidator;
+import com.orange.kafka.Validators.BatchSizeValidator;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Type;
@@ -12,8 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MySourceConnectorConfig extends AbstractConfig {
-  static final Logger log = LoggerFactory.getLogger(MySourceConnectorConfig.class);
+public class MongodbSourceConnectorConfig extends AbstractConfig {
+  static final Logger log = LoggerFactory.getLogger(MongodbSourceConnectorConfig.class);
 
   public static final String TOPIC_PREFIX_CONFIG = "topic.prefix";
   private static final String TOPIC_PREFIX_DOC =
@@ -79,11 +78,11 @@ public class MySourceConnectorConfig extends AbstractConfig {
   private static final String TIMESTAMP_COLUMN_NAME_DISPLAY = "Timestamp Column Name";
 
 
-  public MySourceConnectorConfig(ConfigDef config, Map<String, String> parsedConfig) {
+  public MongodbSourceConnectorConfig(ConfigDef config, Map<String, String> parsedConfig) {
     super(config, parsedConfig);
   }
 
-  public MySourceConnectorConfig(Map<String, String> parsedConfig) {
+  public MongodbSourceConnectorConfig(Map<String, String> parsedConfig) {
     this(conf(), parsedConfig);
   }
 

@@ -1,4 +1,4 @@
-package com.meirkhan.kafka.Validators;
+package com.orange.kafka.Validators;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;

@@ -1,19 +1,16 @@
-package com.meirkhan.kafka;
+package com.orange.kafka;
 
 import com.mongodb.client.MongoCursor;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
-import java.util.Date;
 import org.slf4j.Logger;
-import org.bson.Document;
-import java.time.Instant;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.slf4j.LoggerFactory;
 
 abstract class TableQuerier {
-    static final Logger log = LoggerFactory.getLogger(MySourceConnectorConfig.class);
+    static final Logger log = LoggerFactory.getLogger(MongodbSourceConnectorConfig.class);
     protected MongoCursor<Document> cursor;
     private String mongoUri;
     private String mongoHost;

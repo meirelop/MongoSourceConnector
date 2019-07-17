@@ -1,24 +1,17 @@
-package com.meirkhan.kafka;
+package com.orange.kafka;
 
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.FindIterable;
-import org.apache.kafka.connect.source.SourceRecord;
-import org.bson.BsonDocument;
 import org.bson.Document;
 
 import java.time.Instant;
-import java.util.Iterator;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoCursor;
-import org.apache.commons.lang3.StringUtils;
-import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import java.util.List;
 import java.util.ArrayList;
-
-import org.json.JSONObject;
 
 
 public class MyTests {
@@ -57,25 +50,24 @@ public class MyTests {
 
         MongoClient mongoClient = new MongoClient("localhost", 27017);
         MongoDatabase database = mongoClient.getDatabase("test");
-        MongoCollection collection = database.getCollection("table");
-        String query = "{ },{item:1,_id:0}";
+        MongoCollection collection = database.getCollection("table4");
+        BasicDBObject query = new BasicDBObject();
 
         List<DBObject> criteria = new ArrayList<>();
-        criteria.add(new BasicDBObject("incr", new BasicDBObject("$gt", 12)));
-        criteria.add(new BasicDBObject("incr", new BasicDBObject("$type", "number")));
-        criteria.add(new BasicDBObject("qty",40));
-
-        BasicDBObject gtQuery = new BasicDBObject("$and", criteria);
-        BasicDBObject gtQuery1 = new BasicDBObject();
-        cursor = collection.find(BasicDBObject.parse(query)).iterator();
+//        criteria.add(new BasicDBObject("time", new BasicDBObject(MONGO_CMD_GREATER, lastDate)));
+        criteria.add(new BasicDBObject("time", new BasicDBObject(Constants.MONGO_CMD_LESS, Instant.now())));
+        criteria.add(new BasicDBObject("time", new BasicDBObject(Constants.MONGO_CMD_TYPE, Constants.MONGO_DATE_TYPE)));
+        query = new BasicDBObject(Constants.MONGO_CMD_AND, criteria);
 
 
-        while (cursor.hasNext()) {
-            String res = cursor.next().toJson();
-            JSONObject jsonObj = new JSONObject(res);
-            Double qsddd = Double.valueOf((Double) jsonObj.get("incr"));
-            System.out.println(res);
-        }
+
+
+//        while (cursor.hasNext()) {
+//            String res = cursor.next().toJson();
+//            JSONObject jsonObj = new JSONObject(res);
+//            Double qsddd = Double.valueOf((Double) jsonObj.get("incr"));
+//            System.out.println(res);
+//        }
     }
 }
 

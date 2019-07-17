@@ -1,7 +1,7 @@
 
-package com.meirkhan.kafka;
+package com.orange.kafka;
 
-import com.meirkhan.kafka.utils.DateUtils;
+import com.orange.kafka.utils.DateUtils;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
@@ -15,11 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.*;
-import static com.meirkhan.kafka.MySchemas.*;
+import static com.orange.kafka.Constants.*;
 
 
 public class TimestampQuerier extends TableQuerier{
-    static final Logger log = LoggerFactory.getLogger(MySourceConnectorConfig.class);
+    static final Logger log = LoggerFactory.getLogger(MongodbSourceConnectorConfig.class);
     private String topic;
     private MongoClient mongoClient;
     private MongoDatabase database;

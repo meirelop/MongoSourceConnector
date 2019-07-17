@@ -1,4 +1,4 @@
-package com.meirkhan.kafka;
+package com.orange.kafka;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,14 +6,13 @@ import java.util.Map;
 
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
-import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MySourceConnector extends SourceConnector {
-  private static Logger log = LoggerFactory.getLogger(MySourceConnector.class);
-  private MySourceConnectorConfig config;
+public class MongodbSourceConnector extends SourceConnector {
+  private static Logger log = LoggerFactory.getLogger(MongodbSourceConnector.class);
+  private MongodbSourceConnectorConfig config;
 
   @Override
   public String version() {
@@ -22,7 +21,7 @@ public class MySourceConnector extends SourceConnector {
 
   @Override
   public void start(Map<String, String> map) {
-    config = new MySourceConnectorConfig(map);
+    config = new MongodbSourceConnectorConfig(map);
 
     //TODO: Add things you need to do to setup your connector.
   }
@@ -30,7 +29,7 @@ public class MySourceConnector extends SourceConnector {
   @Override
   public Class<? extends Task> taskClass() {
     //TODO: Return your task implementation.
-    return MySourceTask.class;
+    return MongodbSourceTask.class;
   }
 
   @Override
@@ -50,6 +49,6 @@ public class MySourceConnector extends SourceConnector {
 
   @Override
   public ConfigDef config() {
-    return MySourceConnectorConfig.conf();
+    return MongodbSourceConnectorConfig.conf();
   }
 }
