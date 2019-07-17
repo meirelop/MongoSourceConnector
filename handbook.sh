@@ -53,6 +53,10 @@ exported mongo_path at bashrc
 
 
 -------------------------Mongo queries---------------------------------
+https://docs.mongodb.com/manual/reference/connection-string/
+https://jeromejaglale.com/doc/programming/mongodb_sharding
+https://mongodb.github.io/mongo-java-driver/3.4/driver/tutorials/connect-to-mongodb/#connect-to-a-replica-set
+
 show dbs
 use test
 db.products.insert( { _id: 10, item: "pen", qty: 25 } )

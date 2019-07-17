@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite tests="1" failures="0" name="com.meirkhan.kafka.MySourceTaskTest" time="0" errors="0" skipped="0">
+<testsuite tests="1" failures="0" name="com.orange.kafka.MySourceConnectorConfigTest" time="0.198" errors="0" skipped="0">
   <properties>
     <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
     <property name="sun.boot.library.path" value="/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64"/>
@@ -32,7 +32,7 @@
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="java.class.version" value="52.0"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
-    <property name="os.version" value="4.18.0-24-generic"/>
+    <property name="os.version" value="4.18.0-25-generic"/>
     <property name="library.jansi.path" value="/usr/share/maven/lib/jansi-native"/>
     <property name="user.home" value="/home/meirkhan"/>
     <property name="user.timezone" value="Europe/Paris"/>
@@ -62,5 +62,5 @@
     <property name="sun.desktop" value="gnome"/>
     <property name="sun.cpu.isalist" value=""/>
   </properties>
-  <testcase classname="com.meirkhan.kafka.MySourceTaskTest" name="test" time="0"/>
+  <testcase classname="com.orange.kafka.MySourceConnectorConfigTest" name="doc" time="0.198"/>
 </testsuite>

@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
-Test set: com.meirkhan.kafka.MySourceConnectorConfigTest
+Test set: com.orange.kafka.MySourceTaskTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.237 sec
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0 sec
