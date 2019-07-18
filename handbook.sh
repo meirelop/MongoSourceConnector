@@ -305,3 +305,92 @@ bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic test --from
 13. Mongo projections (Table and Query)
 14. Add timezone parameter
 15. Bulk mode every time repeates first batch-size records
+
+
+--------TESTING-----
+1. https://codeutopia.net/blog/2015/04/11/what-are-unit-testing-integration-testing-and-functional-testing/
+2. https://stackoverflow.com/questions/4904096/whats-the-difference-between-unit-functional-acceptance-and-integration-test
+
+
+
+
+-------MONGO Querying-----------
+1. Mongo aggregation with Java
+https://stackoverflow.com/questions/31643109/mongodb-aggregation-with-java-driver
+
+
+----POSTGRES-----
+1. Install postgres
+https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-18-04
+
+
+
+INSERT INTO DOCUMENT_TEMPLATE(id, name, short_description, author,
+                              description, content, last_updated, created)
+WITH base(id, n1,n2,n3,n4,n5,n6,n7) AS
+(
+  SELECT id
+        ,MIN(CASE WHEN rn = 1 THEN nr END)
+        ,MIN(CASE WHEN rn = 2 THEN nr END)
+        ,MIN(CASE WHEN rn = 3 THEN nr END)
+        ,MIN(CASE WHEN rn = 4 THEN nr END)
+        ,MIN(CASE WHEN rn = 5 THEN nr END)
+        ,MIN(CASE WHEN rn = 6 THEN nr END)
+        ,MIN(CASE WHEN rn = 7 THEN nr END)
+  FROM generate_series(1,100000) id     -- number of rows
+  ,LATERAL( SELECT nr, ROW_NUMBER() OVER (ORDER BY id * random())
+             FROM generate_series(1,900) nr
+          ) sub(nr, rn)
+   GROUP BY id
+), dict(lorem_ipsum, names) AS
+(
+   SELECT 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris lacus arcu, blandit non semper elementum, fringilla sodales est. Ut porttitor blandit sapien pellentesque pretium. Donec ut diam sed urna venenatis hendrerit. Nulla eros arcu, mattis vitae congue cursus, tincidunt sed turpis. Curabitur non enim diam, eget elementum dolor. Vivamus enim tortor, tempor at vehicula ac, malesuada id est. Praesent at nibh eget metus dapibus dapibus. Donec arcu orci, sagittis eu interdum vitae, facilisis quis nibh.
+Mauris luctus molestie velit, at vestibulum magna cursus sit amet. Nulla in accumsan libero. Donec sed sem lectus. Mauris congue sapien et diam euismod vitae scelerisque diam tincidunt. Praesent a justo enim, vitae venenatis dolor. Donec in tortor at magna dapibus suscipit sit amet a libero. Vivamus porttitor rhoncus tellus, at luctus nisl semper bibendum. Fusce eget accumsan orci. Qout'
+         ,'{"James","John","Jimmy","Jessica","Jeffrey","Jonathan","Justin","Jaclyn","Jodie"}'::text[]
+)
+SELECT b.id, sub.*
+FROM base b
+,LATERAL (
+     SELECT names[b.n1 % 9+1]
+           ,substring(lorem_ipsum::text, b.n2, 20)
+           ,names[b.n3 % 9+1]
+           ,substring(lorem_ipsum::text, b.n4, 100)
+           ,substring(lorem_ipsum::text, b.n5, 200)
+           ,NOW() - '1 day'::INTERVAL * (b.n6 % 365)
+           ,(NOW() - '1 day'::INTERVAL * (b.n7 % 365)) - '1 year' :: INTERVAL
+      FROM dict
+) AS sub(name,short_description, author,descriptionm,content, last_updated, created);
+
+
+- SELECT ID, name, created FROM DOCUMENT_TEMPLATE order by id desc limit 100;
+- SELECT count(*) FROM DOCUMENT_TEMPLATE LIMIT 100;
+- \conninfo
+- ALTER USER meirkhan PASSWORD 'omotoh40';
+
+
+
+
+sudo curl -X PUT http://localhost:8083/connectors/jdbc_source_mysql_02/pause
+
+
+name=jdbc_source_mysql_03
+connector.class=io.confluent.connect.jdbc.JdbcSourceConnector
+connection.url=jdbc:postgresql://localhost:5432/meirkhan
+connection.user=meirkhan
+connection.password=omotoh40
+topic.prefix=test-
+table.whitelist=users,products,transactions
+poll.interval.ms=30000
+mode=incrementing
+incrementing.column.name=id
+query=SELECT ID, name, created FROM DOCUMENT_TEMPLATE
+
+
+
+
+
+
+
+
+
+
