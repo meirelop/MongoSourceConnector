@@ -69,7 +69,7 @@ db.table.insert( [{ _id: 12, item: "pen", qty: 40, "incr":3 },
 
 db.table4.insert({_id:1127, item: "qwqwgaaae", incr:5, time:ISODate("2018-11-02")});
 
-for (var i = 1; i <= 1000; i++) { db.test2.insert( { incr : i } ) }
+for (var i = 1; i <= 1000000; i++) { db.test3.insert( { incr : i } ) }
 
 db.table4.find({"time" : { $gte : new ISODate("2017-01-12T20:15:31Z") }});
 
@@ -270,6 +270,7 @@ Error handling:
 3. in "Timestamp" mode, column has to be type of Timestamp
 4. if mode was written wrong syntactically
 5. no input parameter
+6. .ConnectException: query may not be combined with whole-table copying settings in JDBC
 
 
 # quickstart Kafka
@@ -344,8 +345,7 @@ WITH base(id, n1,n2,n3,n4,n5,n6,n7) AS
    GROUP BY id
 ), dict(lorem_ipsum, names) AS
 (
-   SELECT 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris lacus arcu, blandit non semper elementum, fringilla sodales est. Ut porttitor blandit sapien pellentesque pretium. Donec ut diam sed urna venenatis hendrerit. Nulla eros arcu, mattis vitae congue cursus, tincidunt sed turpis. Curabitur non enim diam, eget elementum dolor. Vivamus enim tortor, tempor at vehicula ac, malesuada id est. Praesent at nibh eget metus dapibus dapibus. Donec arcu orci, sagittis eu interdum vitae, facilisis quis nibh.
-Mauris luctus molestie velit, at vestibulum magna cursus sit amet. Nulla in accumsan libero. Donec sed sem lectus. Mauris congue sapien et diam euismod vitae scelerisque diam tincidunt. Praesent a justo enim, vitae venenatis dolor. Donec in tortor at magna dapibus suscipit sit amet a libero. Vivamus porttitor rhoncus tellus, at luctus nisl semper bibendum. Fusce eget accumsan orci. Qout'
+   SELECT 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
          ,'{"James","John","Jimmy","Jessica","Jeffrey","Jonathan","Justin","Jaclyn","Jodie"}'::text[]
 )
 SELECT b.id, sub.*
@@ -387,6 +387,51 @@ query=SELECT ID, name, created FROM DOCUMENT_TEMPLATE
 
 
 
+
+
+insert into table1(ID, name, created)  select ID, name, created FROM DOCUMENT_TEMPLATE where id > 100000;
+
+
+
+
+
+
+
+
+INSERT INTO DOCUMENT_TEMPLATE(id, name, short_description, author,
+                              description, content, last_updated, created)
+WITH base(id, n1,n2,n3,n4,n5,n6,n7) AS
+(
+  SELECT id
+        ,MIN(CASE WHEN rn = 1 THEN nr END)
+        ,MIN(CASE WHEN rn = 2 THEN nr END)
+        ,MIN(CASE WHEN rn = 3 THEN nr END)
+        ,MIN(CASE WHEN rn = 4 THEN nr END)
+        ,MIN(CASE WHEN rn = 5 THEN nr END)
+        ,MIN(CASE WHEN rn = 6 THEN nr END)
+        ,MIN(CASE WHEN rn = 7 THEN nr END)
+  FROM generate_series(100001,1000000) id     -- number of rows
+  ,LATERAL( SELECT nr, ROW_NUMBER() OVER (ORDER BY id * random())
+             FROM generate_series(1,900) nr
+          ) sub(nr, rn)
+   GROUP BY id
+), dict(lorem_ipsum, names) AS
+(
+   SELECT 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
+         ,'{"James","John","Jimmy","Jessica","Jeffrey","Jonathan","Justin","Jaclyn","Jodie"}'::text[]
+)
+SELECT b.id, sub.*
+FROM base b
+,LATERAL (
+     SELECT names[b.n1 % 9+1]
+           ,substring(lorem_ipsum::text, b.n2, 20)
+           ,names[b.n3 % 9+1]
+           ,substring(lorem_ipsum::text, b.n4, 100)
+           ,substring(lorem_ipsum::text, b.n5, 200)
+           ,NOW() - '1 day'::INTERVAL * (b.n6 % 365)
+           ,(NOW() - '1 day'::INTERVAL * (b.n7 % 365)) - '1 year' :: INTERVAL
+      FROM dict
+) AS sub(name,short_description, author,descriptionm,content, last_updated, created);
 
 
 

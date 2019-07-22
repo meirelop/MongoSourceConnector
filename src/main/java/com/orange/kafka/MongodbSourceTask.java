@@ -139,11 +139,16 @@ public class MongodbSourceTask extends SourceTask {
 
     if(querier != null) {
       querier.executeCursor();
-      while (results.size() < batchMaxRows && querier.hasNext()) {
+      while (querier.hasNext()) {
         SourceRecord record = querier.extractRecord();
         results.add(record);
-        resetAndRequeueHead(querier);
+        if(!querier.hasNext()) {
+          resetAndRequeueHead(querier);
+        }
       }
+    }
+    if(querier != null) {
+      resetAndRequeueHead(querier);
       querier.closeCursor();
     }
     return results;
