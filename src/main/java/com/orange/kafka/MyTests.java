@@ -12,6 +12,12 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.DBObject;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Iterator;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONString;
 
 
 public class MyTests {
@@ -61,6 +67,37 @@ public class MyTests {
 
 
 
+        String json_str = "[{$unwind : \"$views\"}, {$match : {\"views.isActive\" : true}},\n" +
+                "    {$sort : {\"views.date\" : 1}},\n" +
+                "    {$limit : 200},\n" +
+                "    {$project : {\"_id\" : 0, \"url\" : \"$views.url\", \"date\" : \"$views.date\"}}]\n";
+
+        String qsd = "{\"$unwind\":\"$views\"}";
+
+        final JSONArray obj = new JSONArray(json_str);
+//        System.out.println(obj);
+        for(Object i: obj) {
+            String obj2 = i.toString();
+            JSONObject obj3 = new JSONObject(obj2);
+            JSONArray keys = obj3.names();
+//            System.out.println(keys);
+        }
+
+
+        JSONObject jsonObject = new JSONObject(json_str.trim());
+        Iterator<String> keys = jsonObject.keys();
+
+        while(keys.hasNext()) {
+            String key = keys.next();
+            if (jsonObject.get(key) instanceof JSONObject) {
+                // do something with jsonObject here
+                System.out.println((key));
+            }
+        }
+
+
+//        JSONObject qs = new JSONObject(qsd);
+//        System.out.println(qs);
 
 //        while (cursor.hasNext()) {
 //            String res = cursor.next().toJson();
@@ -68,6 +105,12 @@ public class MyTests {
 //            Double qsddd = Double.valueOf((Double) jsonObj.get("incr"));
 //            System.out.println(res);
 //        }
+
+
+
+
+
+
     }
 }
 

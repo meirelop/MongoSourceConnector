@@ -1,11 +1,11 @@
 # MongoSourceConnector
 Mongo Source Connector to Kafka
 
-topic.prefix - prefix to topic for consumer. Topic name is: topic.prefix+collection name
+topic.prefix - prefix to topic for consumer. Topic name is: prefix.dbname.collectionname
 batch.size - default 100, maximum 500
 mongo.db - mongodb DB name
 mongo.uri - mongo connection uri
-poll.interval.sec - period of polling
+poll.interval.ms - period of polling in milliseconds
 mode - similar to JDBC, 4 modes: bulk, incrementing, timestamp, timestamp+incrementing
 incrementing.column.name - name of field with incremental ID (Number type)
 timestamp.column.name - name of field with with incremental date (date type)
