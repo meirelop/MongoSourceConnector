@@ -34,8 +34,7 @@ public class MongodbSourceTask extends SourceTask {
     }
 
     String mode = config.getModeName();
-    String delim = ".";
-    String topic = config.getTopicPrefix() + delim + config.getMongoDbName() + delim + config.getMongoCollectionName();
+    String topic = config.getTopicPrefix();
 
 
     if(mode.equals(MongodbSourceConnectorConfig.MODE_BULK)) {
