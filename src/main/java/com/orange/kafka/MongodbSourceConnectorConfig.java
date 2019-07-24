@@ -114,6 +114,22 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
     if(mode.equals(MongodbSourceConnectorConfig.MODE_UNSPECIFIED)) {
       throw new ConfigException("Query mode must be specified");
     }
+
+    if(mode.equals(MongodbSourceConnectorConfig.MODE_INCREMENTING) ||
+       mode.equals(MongodbSourceConnectorConfig.MODE_TIMESTAMP_INCREMENTING)) {
+      if(getString(MongodbSourceConnectorConfig.INCREMENTING_COLUMN_NAME_CONFIG).equals(
+              MongodbSourceConnectorConfig.INCREMENTING_COLUMN_NAME_DEFAULT)) {
+        throw new ConfigException(String.format("Incrementing column name must be specified in '%s' mode", mode));
+      }
+    }
+    if(mode.equals(MongodbSourceConnectorConfig.MODE_TIMESTAMP) ||
+       mode.equals(MongodbSourceConnectorConfig.MODE_TIMESTAMP_INCREMENTING)) {
+      if(getString(MongodbSourceConnectorConfig.TIMESTAMP_COLUMN_NAME_CONFIG).equals(
+              MongodbSourceConnectorConfig.TIMESTAMP_COLUMN_NAME_DEFAULT)) {
+        throw new ConfigException(String.format("Timestamp column name must be specified in '%s' mode", mode));
+      }
+    }
+
   }
 
 

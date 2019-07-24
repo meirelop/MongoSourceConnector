@@ -7,9 +7,12 @@ public class BatchSizeValidator implements ConfigDef.Validator {
 
     @Override
     public void ensureValid(String name, Object value) {
+        if(! (value instanceof Integer)) {
+            throw new ConfigException(name, value, "Batch size must be an integer");
+        }
         Integer batchSize = (Integer) value;
-        if (!(1 <= batchSize && batchSize <= 500)){
-            throw new ConfigException(name, value, "Batch Size must be a positive integer that's less or equal to 500");
+        if (batchSize < 1){
+            throw new ConfigException(name, value, "Batch Size must be a positive integer");
         }
     }
 }
