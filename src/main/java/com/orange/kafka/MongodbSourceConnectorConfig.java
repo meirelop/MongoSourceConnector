@@ -7,6 +7,7 @@ import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.common.config.ConfigDef.Importance;
+import org.apache.kafka.common.config.ConfigException;
 
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
@@ -83,14 +84,6 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
   public static final String TIMESTAMP_COLUMN_NAME_DEFAULT = "";
 
 
-  public MongodbSourceConnectorConfig(ConfigDef config, Map<String, String> parsedConfig) {
-    super(config, parsedConfig);
-  }
-
-  public MongodbSourceConnectorConfig(Map<String, String> parsedConfig) {
-    this(conf(), parsedConfig);
-  }
-
   public static ConfigDef conf() {
     return new ConfigDef()
             .define(TOPIC_PREFIX_CONFIG, Type.STRING, Importance.HIGH, TOPIC_PREFIX_DOC)
@@ -101,10 +94,28 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
             .define(MONGO_DB_CONFIG, Type.STRING, Importance.HIGH, MONGO_DB_DOC)
             .define(MONGO_QUERY_CONFIG, Type.STRING, Importance.HIGH, MONGO_QUERY_DOC)
             .define(POLL_INTERVAL_CONFIG, Type.INT, POLL_INTERVAL_DEFAULT, new PollIntervalValidator(), Importance.HIGH, POLL_INTERVAL_DOC)
-            .define(MODE_CONFIG, Type.STRING, Importance.MEDIUM, MODE_DOC)
+            .define(MODE_CONFIG, Type.STRING, MODE_UNSPECIFIED, ConfigDef.ValidString.in(
+                    MODE_UNSPECIFIED,
+                    MODE_BULK,
+                    MODE_TIMESTAMP,
+                    MODE_INCREMENTING,
+                    MODE_TIMESTAMP_INCREMENTING),Importance.HIGH, MODE_DOC)
             .define(INCREMENTING_COLUMN_NAME_CONFIG, Type.STRING,INCREMENTING_COLUMN_NAME_DEFAULT, Importance.MEDIUM, INCREMENTING_COLUMN_NAME_DOC)
             .define(TIMESTAMP_COLUMN_NAME_CONFIG, Type.STRING,TIMESTAMP_COLUMN_NAME_DEFAULT, Importance.MEDIUM, TIMESTAMP_COLUMN_NAME_DOC);
   }
+
+  public MongodbSourceConnectorConfig(ConfigDef config, Map<String, String> parsedConfig) {
+    super(config, parsedConfig);
+  }
+
+  public MongodbSourceConnectorConfig(Map<String, String> parsedConfig) {
+    this(conf(), parsedConfig);
+    String mode = getString(MongodbSourceConnectorConfig.MODE_CONFIG);
+    if(mode.equals(MongodbSourceConnectorConfig.MODE_UNSPECIFIED)) {
+      throw new ConfigException("Query mode must be specified");
+    }
+  }
+
 
   public int getBatchSize() {
     return this.getInt(BATCH_SIZE_CONFIG);
