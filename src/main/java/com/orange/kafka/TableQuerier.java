@@ -25,20 +25,20 @@ abstract class TableQuerier {
     public TableQuerier(
                         String topic,
                         String mongoUri,
-                        String mongoHost,
-                        int mongoPort,
+//                        String mongoHost,
+//                        int mongoPort,
                         String dbName,
                         String collectionName
                         )
     {   this.topic = topic;
         this.mongoUri = mongoUri;
-        this.mongoHost = mongoHost;
-        this.mongoPort = mongoPort;
+//        this.mongoHost = mongoHost;
+//        this.mongoPort = mongoPort;
         this.dbName = dbName;
         this.collectionName = collectionName;
-        this.mongoClient = new MongoClient(mongoHost, mongoPort);
-        this.database = mongoClient.getDatabase(dbName);
-        this.collection = database.getCollection(collectionName);
+//        this.mongoClient = new MongoClient(mongoHost, mongoPort);
+//        this.database = mongoClient.getDatabase(dbName);
+//        this.collection = database.getCollection(collectionName);
     }
 
     public abstract boolean hasNext();

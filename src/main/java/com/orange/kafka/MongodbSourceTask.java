@@ -43,8 +43,8 @@ public class MongodbSourceTask extends SourceTask {
               new BulkCollectionQuerier(
                       topic,
                       config.getMongoUri(),
-                      config.getMongoHost(),
-                      config.getMongoPort(),
+//                      config.getMongoHost(),
+//                      config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName()
               )
@@ -56,8 +56,8 @@ public class MongodbSourceTask extends SourceTask {
               new IncrementQuerier(
                       topic,
                       config.getMongoUri(),
-                      config.getMongoHost(),
-                      config.getMongoPort(),
+//                      config.getMongoHost(),
+//                      config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
                       config.getIncrementColumn(),
@@ -71,8 +71,8 @@ public class MongodbSourceTask extends SourceTask {
               new TimestampQuerier(
                       topic,
                       config.getMongoUri(),
-                      config.getMongoHost(),
-                      config.getMongoPort(),
+//                      config.getMongoHost(),
+//                      config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
                       config.getTimestampColumn(),
@@ -86,8 +86,8 @@ public class MongodbSourceTask extends SourceTask {
               new TimestampIncrementQuerier(
                       topic,
                       config.getMongoUri(),
-                      config.getMongoHost(),
-                      config.getMongoPort(),
+//                      config.getMongoHost(),
+//                      config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
                       config.getTimestampColumn(),

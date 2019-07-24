@@ -35,25 +35,21 @@ public class TimestampQuerier extends TableQuerier{
             (
                     String topic,
                     String mongoUri,
-                    String mongoHost,
-                    int mongoPort,
+//                    String mongoHost,
+//                    int mongoPort,
                     String dbName,
                     String collectionName,
                     String timestampColumn,
                     Instant lastDate
             )
     {
-        super(topic,mongoUri, mongoHost,mongoPort,dbName,collectionName);
+        super(topic,mongoUri, dbName,collectionName);
         this.topic = topic;
         this.timestampColumn = timestampColumn;
         this.dbName = dbName;
         this.collectionName = collectionName;
         this.lastDate = lastDate;
-        if(!mongoUri.isEmpty()) {
-            this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
-        } else {
-            this.mongoClient = new MongoClient(mongoHost,mongoPort);
-        }
+        this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
         this.database = mongoClient.getDatabase(dbName);
         this.collection = database.getCollection(collectionName);
     }
