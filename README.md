@@ -77,16 +77,16 @@ The MongoDB connector can also be used as a library without Kafka or Kafka Conne
 
 
 ## Config file example
-name=MongoSourceConnectorDemo
-connector.class=com.orange.kafka.MongodbSourceConnector
-topic.prefix=mongotest
-mongo.uri=mongodb://user1:pwd1@mongos0.example.com:27017,mongos1.example.com:27017/admin
-mongo.db=admin
-mongo.query=db.products.find()
-poll.interval.ms=20000
-batch.size=200
-mode=incrementing
-incrementing.column.name=ID
+- name=MongoSourceConnectorDemo
+- connector.class=com.orange.kafka.MongodbSourceConnector
+- topic.prefix=mongotest
+- mongo.uri=mongodb://user1:pwd1@mongos0.example.com:27017,mongos1.example.com:27017/admin
+- mongo.db=admin
+- mongo.query=db.products.find();
+- poll.interval.ms=20000
+- batch.size=200
+- mode=incrementing
+- incrementing.column.name=ID
 
 
 # Quickstart
