@@ -1,5 +1,6 @@
 package com.orange.kafka;
 
+
 import com.orange.kafka.Validators.BatchSizeValidator;
 import com.orange.kafka.Validators.PollIntervalValidator;
 import com.orange.kafka.Validators.MongoQueryValidator;
@@ -129,8 +130,9 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
         throw new ConfigException(String.format("Timestamp column name must be specified in '%s' mode", mode));
       }
     }
-
   }
+
+
 
 
   public int getBatchSize() {

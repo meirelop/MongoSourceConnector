@@ -35,8 +35,6 @@ public class TimestampQuerier extends TableQuerier{
             (
                     String topic,
                     String mongoUri,
-//                    String mongoHost,
-//                    int mongoPort,
                     String dbName,
                     String collectionName,
                     String timestampColumn,

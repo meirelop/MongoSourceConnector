@@ -34,8 +34,6 @@ public class IncrementQuerier extends TableQuerier{
             (
                     String topic,
                     String mongoUri,
-//                    String mongoHost,
-//                    int mongoPort,
                     String dbName,
                     String collectionName,
                     String incrementColumn,

@@ -21,7 +21,7 @@ public class MongodbSourceConnectorConfigTest {
   @Before
   public void setupInitialConfig() {
     config = new HashMap<>();
-    config.put(MONGO_URI_CONFIG, "foo");
+    config.put(MONGO_URI_CONFIG, "mongodb://localhost:27017");
     config.put(MONGO_DB_CONFIG, "test");
     config.put(MONGO_QUERY_CONFIG, "db.test3.find()");
     config.put(BATCH_SIZE_CONFIG, "100");

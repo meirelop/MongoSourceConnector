@@ -26,18 +26,15 @@ public class BulkCollectionQuerier extends TableQuerier{
 
     public BulkCollectionQuerier(String topic,
                                  String mongoUri,
-//                                 String mongoHost,
-//                                 int mongoPort,
                                  String dbName,
                                  String collectionName
                                  ) {
         super(topic,mongoUri,dbName,collectionName);
-//        super(topic,mongoUri, mongoHost,mongoPort,dbName,collectionName);
+
         this.topic = topic;
         this.collectionName = collectionName;
         this.dbName = dbName;
         this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
-//        this.mongoClient = new MongoClient(mongoHost,mongoPort);
         this.database = mongoClient.getDatabase(dbName);
         this.collection = database.getCollection(collectionName);
     }

@@ -37,8 +37,6 @@ public class TimestampIncrementQuerier extends TableQuerier{
             (
                     String topic,
                     String mongoUri,
-//                    String mongoHost,
-//                    int mongoPort,
                     String dbName,
                     String collectionName,
                     String timestampColumn,
@@ -47,7 +45,6 @@ public class TimestampIncrementQuerier extends TableQuerier{
                     Double lastIncrement
             )
     {
-//        super(topic, mongoUri, mongoHost,mongoPort,dbName,collectionName);
         super(topic, mongoUri,dbName,collectionName);
         this.topic = topic;
         this.timestampColumn = timestampColumn;
@@ -55,7 +52,6 @@ public class TimestampIncrementQuerier extends TableQuerier{
         this.collectionName = collectionName;
         this.lastDate = lastDate;
         this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
-//        this.mongoClient = new MongoClient(mongoHost,mongoPort);
         this.database = mongoClient.getDatabase(dbName);
         this.collection = database.getCollection(collectionName);
         this.incrementColumn = incrementColumn;
