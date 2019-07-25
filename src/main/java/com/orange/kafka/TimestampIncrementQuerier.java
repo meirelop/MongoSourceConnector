@@ -16,7 +16,20 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.*;
 
-
+/**
+ * <p>
+ *   TimestampIncrementingQuerier performs incremental loading of data using two mechanisms: a
+ *   timestamp column provides monotonically incrementing values that can be used to detect new or
+ *   modified rows and a strictly incrementing (e.g. auto increment) column allows detecting new
+ *   rows or combined with the timestamp provide a unique identifier for each update to the row.
+ * </p>
+ * <p>
+ *   Both columns timestamp and incrementing columns must be specified. They are both
+ *   used to ensure only new or updated rows are reported and to totally order updates so
+ *   recovery can occur no matter when offsets were committed.
+ * </p>
+ * @author Meirkhan Rakhmetzhanov
+ */
 public class TimestampIncrementQuerier extends TableQuerier{
     static final Logger log = LoggerFactory.getLogger(MongodbSourceConnectorConfig.class);
     private String topic;
@@ -25,7 +38,7 @@ public class TimestampIncrementQuerier extends TableQuerier{
     private MongoCollection collection;
     MongoCursor<Document> cursor;
     private String timestampColumn;
-    private String dbName;
+    private String DBname;
     private String collectionName;
     private Instant lastDate;
     private Instant recordDate;
@@ -33,11 +46,22 @@ public class TimestampIncrementQuerier extends TableQuerier{
     private Double recordIncrement;
     private String incrementColumn;
 
+    /**
+     * Constructs and initailizes an TimestampIncrementQuerier.
+     * @param topic topic name to produce
+     * @param mongoUri mongo connection string
+     * @param DBname name od database in mongodb
+     * @param collectionName collection name parsed from query string
+     * @param incrementColumn name of incrementing ID field in MongoDB collection
+     * @param lastIncrement last value of increment ID, querier will take records bigger than this value
+     * @param timestampColumn name of date field in MongoDB collection
+     * @param lastDate latest date, querier will take records bigger than this date
+     */
     public TimestampIncrementQuerier
             (
                     String topic,
                     String mongoUri,
-                    String dbName,
+                    String DBname,
                     String collectionName,
                     String timestampColumn,
                     Instant lastDate,
@@ -45,14 +69,14 @@ public class TimestampIncrementQuerier extends TableQuerier{
                     Double lastIncrement
             )
     {
-        super(topic, mongoUri,dbName,collectionName);
+        super(topic, mongoUri,DBname,collectionName);
         this.topic = topic;
         this.timestampColumn = timestampColumn;
-        this.dbName = dbName;
+        this.DBname = DBname;
         this.collectionName = collectionName;
         this.lastDate = lastDate;
         this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
-        this.database = mongoClient.getDatabase(dbName);
+        this.database = mongoClient.getDatabase(DBname);
         this.collection = database.getCollection(collectionName);
         this.incrementColumn = incrementColumn;
         this.lastIncrement = lastIncrement;
@@ -60,7 +84,7 @@ public class TimestampIncrementQuerier extends TableQuerier{
 
     private Map<String, String> sourcePartition() {
         Map<String, String> map = new HashMap<>();
-        map.put(Constants.DATABASE_NAME_FIELD, dbName);
+        map.put(Constants.DATABASE_NAME_FIELD, DBname);
         map.put(Constants.COLLECTION_FIELD, collectionName);
         return map;
     }
@@ -80,6 +104,7 @@ public class TimestampIncrementQuerier extends TableQuerier{
         criteria.add(new BasicDBObject(timestampColumn, new BasicDBObject(Constants.MONGO_CMD_TYPE, Constants.MONGO_DATE_TYPE)));
         criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(Constants.MONGO_CMD_GREATER, lastIncrement)));
         criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(Constants.MONGO_CMD_TYPE, Constants.MONGO_NUMBER_TYPE)));
+        log.debug("{} prepared mongodb query: {}", this, criteria);
         return new BasicDBObject(Constants.MONGO_CMD_AND, criteria);
     }
 

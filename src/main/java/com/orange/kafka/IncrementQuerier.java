@@ -16,7 +16,14 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.lang.Math;
 
-
+/**
+ * <p>
+ *   IncrementQuerier performs incremental loading of data using increment column.
+ *   increment column provides monotonically incrementing values that can be used to detect new or
+ *   modified rows where increment id column is modified.
+ * </p>
+ * @author Meirkhan Rakhmetzhanov
+ */
 public class IncrementQuerier extends TableQuerier{
     static final Logger log = LoggerFactory.getLogger(MongodbSourceConnectorConfig.class);
     private String topic;
@@ -27,34 +34,43 @@ public class IncrementQuerier extends TableQuerier{
     MongoCursor<Document> cursor;
     private Double lastIncrement;
     private Double recordIncrement;
-    private String dbName;
+    private String DBname;
     private String collectionName;
 
+    /**
+     * Constructs and initailizes an IncrementQuerier.
+     * @param topic topic name to produce
+     * @param mongoUri mongo connection string
+     * @param DBname name od database in mongodb
+     * @param collectionName collection name parsed from query string
+     * @param incrementColumn name of incrementing ID field in MongoDB collection
+     * @param lastIncrement last value of increment ID, querier will take records bigger than this value
+     */
     public IncrementQuerier
             (
                     String topic,
                     String mongoUri,
-                    String dbName,
+                    String DBname,
                     String collectionName,
                     String incrementColumn,
                     Double lastIncrement
             )
     {
-        super(topic, mongoUri,dbName,collectionName);
+        super(topic, mongoUri,DBname,collectionName);
         this.topic = topic;
         this.incrementColumn = incrementColumn;
         this.lastIncrement = lastIncrement;
-        this.dbName = dbName;
+        this.DBname = DBname;
         this.collectionName = collectionName;
         this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
-        this.database = mongoClient.getDatabase(dbName);
+        this.database = mongoClient.getDatabase(DBname);
         this.collection = database.getCollection(collectionName);
     }
 
 
     private Map<String, String> sourcePartition() {
         Map<String, String> map = new HashMap<>();
-        map.put(Constants.DATABASE_NAME_FIELD, dbName);
+        map.put(Constants.DATABASE_NAME_FIELD, DBname);
         map.put(Constants.COLLECTION_FIELD, collectionName);
         return map;
     }
@@ -70,6 +86,7 @@ public class IncrementQuerier extends TableQuerier{
         List<DBObject> criteria = new ArrayList<>();
         criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(Constants.MONGO_CMD_GREATER, lastIncrement)));
         criteria.add(new BasicDBObject(incrementColumn, new BasicDBObject(Constants.MONGO_CMD_TYPE, Constants.MONGO_NUMBER_TYPE)));
+        log.debug("{} prepared mongodb query: {}", this, criteria);
         return new BasicDBObject(Constants.MONGO_CMD_AND, criteria);
     }
 

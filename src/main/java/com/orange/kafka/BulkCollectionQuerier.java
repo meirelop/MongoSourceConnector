@@ -12,11 +12,13 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+/**
+ * BulkCollectionQuerier always returns the entire collection.
+ */
 public class BulkCollectionQuerier extends TableQuerier{
     static final Logger log = LoggerFactory.getLogger(MongodbSourceConnectorConfig.class);
     protected MongoCursor<Document> cursor;
-    private String dbName;
+    private String DBname;
     private String collectionName;
     private MongoClient mongoClient;
     private MongoDatabase database;
@@ -26,22 +28,22 @@ public class BulkCollectionQuerier extends TableQuerier{
 
     public BulkCollectionQuerier(String topic,
                                  String mongoUri,
-                                 String dbName,
+                                 String DBname,
                                  String collectionName
                                  ) {
-        super(topic,mongoUri,dbName,collectionName);
+        super(topic,mongoUri,DBname,collectionName);
 
         this.topic = topic;
         this.collectionName = collectionName;
-        this.dbName = dbName;
+        this.DBname = DBname;
         this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
-        this.database = mongoClient.getDatabase(dbName);
+        this.database = mongoClient.getDatabase(DBname);
         this.collection = database.getCollection(collectionName);
     }
 
     private Map<String, String> sourcePartition() {
         Map<String, String> map = new HashMap<>();
-        map.put(Constants.DATABASE_NAME_FIELD, dbName);
+        map.put(Constants.DATABASE_NAME_FIELD, DBname);
         map.put(Constants.COLLECTION_FIELD, collectionName);
         return map;
     }

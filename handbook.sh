@@ -262,6 +262,7 @@ bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic test --from
 15. Bulk mode every time repeates first batch-size records
 16. Check for correctness of collection name, check connection as in JDBC
 17. Check for correct pattern of query.
+18. Check beforehand that given collection, column exists
 
 
 --------TESTING-----
@@ -346,52 +347,6 @@ query=SELECT ID, name, created FROM DOCUMENT_TEMPLATE
 
 
 insert into table1(ID, name, created)  select ID, name, created FROM DOCUMENT_TEMPLATE where id > 100000;
-
-
-
-
-
-
-
-
-INSERT INTO DOCUMENT_TEMPLATE(id, name, short_description, author,
-                              description, content, last_updated, created)
-WITH base(id, n1,n2,n3,n4,n5,n6,n7) AS
-(
-  SELECT id
-        ,MIN(CASE WHEN rn = 1 THEN nr END)
-        ,MIN(CASE WHEN rn = 2 THEN nr END)
-        ,MIN(CASE WHEN rn = 3 THEN nr END)
-        ,MIN(CASE WHEN rn = 4 THEN nr END)
-        ,MIN(CASE WHEN rn = 5 THEN nr END)
-        ,MIN(CASE WHEN rn = 6 THEN nr END)
-        ,MIN(CASE WHEN rn = 7 THEN nr END)
-  FROM generate_series(100001,1000000) id     -- number of rows
-  ,LATERAL( SELECT nr, ROW_NUMBER() OVER (ORDER BY id * random())
-             FROM generate_series(1,900) nr
-          ) sub(nr, rn)
-   GROUP BY id
-), dict(lorem_ipsum, names) AS
-(
-   SELECT 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
-         ,'{"James","John","Jimmy","Jessica","Jeffrey","Jonathan","Justin","Jaclyn","Jodie"}'::text[]
-)
-SELECT b.id, sub.*
-FROM base b
-,LATERAL (
-     SELECT names[b.n1 % 9+1]
-           ,substring(lorem_ipsum::text, b.n2, 20)
-           ,names[b.n3 % 9+1]
-           ,substring(lorem_ipsum::text, b.n4, 100)
-           ,substring(lorem_ipsum::text, b.n5, 200)
-           ,NOW() - '1 day'::INTERVAL * (b.n6 % 365)
-           ,(NOW() - '1 day'::INTERVAL * (b.n7 % 365)) - '1 year' :: INTERVAL
-      FROM dict
-) AS sub(name,short_description, author,descriptionm,content, last_updated, created);
-
-
-
-
 
 
 

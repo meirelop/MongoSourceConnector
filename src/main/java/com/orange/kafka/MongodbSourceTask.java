@@ -12,6 +12,13 @@ import java.util.concurrent.TimeUnit;
 import java.time.Instant;
 import java.time.LocalDateTime;
 
+/**
+ * A Kafka Connect source task that copies the data from single MongoDB instance or MongoDB replica sets.
+ *
+ * @see MongodbSourceConnector
+ * @see MongodbSourceConnectorConfig
+ * @author Meirkhan Rakhmetzhanov
+ */
 public class MongodbSourceTask extends SourceTask {
   static final Logger log = LoggerFactory.getLogger(MongodbSourceTask.class);
   public MongodbSourceConnectorConfig config;
@@ -43,8 +50,6 @@ public class MongodbSourceTask extends SourceTask {
               new BulkCollectionQuerier(
                       topic,
                       config.getMongoUri(),
-//                      config.getMongoHost(),
-//                      config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName()
               )
@@ -56,8 +61,6 @@ public class MongodbSourceTask extends SourceTask {
               new IncrementQuerier(
                       topic,
                       config.getMongoUri(),
-//                      config.getMongoHost(),
-//                      config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
                       config.getIncrementColumn(),
@@ -71,8 +74,6 @@ public class MongodbSourceTask extends SourceTask {
               new TimestampQuerier(
                       topic,
                       config.getMongoUri(),
-//                      config.getMongoHost(),
-//                      config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
                       config.getTimestampColumn(),
@@ -86,8 +87,6 @@ public class MongodbSourceTask extends SourceTask {
               new TimestampIncrementQuerier(
                       topic,
                       config.getMongoUri(),
-//                      config.getMongoHost(),
-//                      config.getMongoPort(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
                       config.getTimestampColumn(),
@@ -97,9 +96,11 @@ public class MongodbSourceTask extends SourceTask {
               )
       );
     }
+    log.info("Successfully started MongoDB connector task");
   }
 
   private void initializeLastVariables() {
+    log.debug("Source offsets initializing");
       Map<String, Object> lastSourceOffset;
       lastSourceOffset = context.offsetStorageReader().offset(sourcePartition());
 
@@ -137,15 +138,18 @@ public class MongodbSourceTask extends SourceTask {
     int batchMaxRows = config.getBatchSize();
     final TableQuerier querier = tableQueue.peek();
 
+    int i = 0;
     if(querier != null) {
       querier.executeCursor();
       while (querier.hasNext()) {
         SourceRecord record = querier.extractRecord();
         results.add(record);
+        i += 1;
         if(!querier.hasNext()) {
           resetAndRequeueHead(querier);
         }
       }
+      if (i > 0) log.info(String.format("Fetched %s record(s)", i));
     }
     if(querier != null) {
       resetAndRequeueHead(querier);
@@ -156,6 +160,7 @@ public class MongodbSourceTask extends SourceTask {
 
   @Override
   public void stop() {
+    log.info("Stopping MongoDB Source Connector task");
   }
 
 

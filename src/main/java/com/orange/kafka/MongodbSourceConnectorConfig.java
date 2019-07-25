@@ -3,7 +3,6 @@ package com.orange.kafka;
 
 import com.orange.kafka.Validators.BatchSizeValidator;
 import com.orange.kafka.Validators.PollIntervalValidator;
-import com.orange.kafka.Validators.MongoQueryValidator;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigDef.Type;
@@ -15,6 +14,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The configuration properties.
+ * @author Meirkhan Rakhmetzhanov
+ */
 public class MongodbSourceConnectorConfig extends AbstractConfig {
   static final Logger log = LoggerFactory.getLogger(MongodbSourceConnectorConfig.class);
 
@@ -89,7 +92,7 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
     return new ConfigDef()
             .define(TOPIC_PREFIX_CONFIG, Type.STRING, Importance.HIGH, TOPIC_PREFIX_DOC)
             .define(BATCH_SIZE_CONFIG, Type.INT, BATCH_SIZE_DEFAULT, new BatchSizeValidator(), Importance.LOW, BATCH_SIZE_DOC)
-            .define(MONGO_URI_CONFIG, Type.STRING,MONGO_URI_DEFAULT , Importance.MEDIUM, MONGO_URI_DOC)
+            .define(MONGO_URI_CONFIG, Type.STRING,MONGO_URI_DEFAULT , Importance.HIGH, MONGO_URI_DOC)
             .define(MONGO_HOST_CONFIG, Type.STRING, MONGO_HOST_DEFAULT,Importance.LOW, MONGO_HOST_DOC)
             .define(MONGO_PORT_CONFIG, Type.INT, MONGO_PORT_DEFAULT , Importance.LOW, MONGO_PORT_DOC)
             .define(MONGO_DB_CONFIG, Type.STRING, Importance.HIGH, MONGO_DB_DOC)
@@ -109,6 +112,10 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
     super(config, parsedConfig);
   }
 
+  /**
+   * Constructor within which mode configuration is checked
+   * @throws ConfigException when mode or column was not specified correctly
+   */
   public MongodbSourceConnectorConfig(Map<String, String> parsedConfig) {
     this(conf(), parsedConfig);
     String mode = getString(MongodbSourceConnectorConfig.MODE_CONFIG);
@@ -132,14 +139,9 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
     }
   }
 
+  public int getBatchSize() {return this.getInt(BATCH_SIZE_CONFIG); }
 
-
-
-  public int getBatchSize() {
-    return this.getInt(BATCH_SIZE_CONFIG);
-  }
-
-  public String getTopicPrefix() { return this.getString(TOPIC_PREFIX_CONFIG); }
+  public String getTopicPrefix() {return this.getString(TOPIC_PREFIX_CONFIG); }
 
   public String getMongoUri() {return this.getString(MONGO_URI_CONFIG); }
 
@@ -155,6 +157,10 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
     return StringUtils.substringBetween(this.getMongoQuery(), "db.", ".find");
   }
 
+  /**
+   * getMongoQueryFilters gets substring of query inside the brackets
+   * @return filter substring of mongodb query
+   */
   public String getMongoQueryFilters() {
     String query = this.getMongoQuery();
     return query.substring(query.indexOf('(') + 1, query.lastIndexOf(')'));
