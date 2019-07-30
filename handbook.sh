@@ -344,8 +344,6 @@ query=SELECT ID, name, created FROM DOCUMENT_TEMPLATE
 
 
 
-
-
 insert into table1(ID, name, created)  select ID, name, created FROM DOCUMENT_TEMPLATE where id > 100000;
 
 
