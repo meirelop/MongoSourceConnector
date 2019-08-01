@@ -30,6 +30,8 @@ abstract class TableQuerier {
     private MongoClient mongoClient;
     private MongoDatabase database;
     private String topic;
+    private String includeFields;
+    private String excludeFields;
 
     /**
      * Constructs and initailizes a TableQuerier.
@@ -43,12 +45,16 @@ abstract class TableQuerier {
                         String topic,
                         String mongoUri,
                         String DBname,
-                        String collectionName
+                        String collectionName,
+                        String includeFields,
+                        String excludeFields
                         )
     {   this.topic = topic;
         this.mongoUri = mongoUri;
         this.DBname = DBname;
         this.collectionName = collectionName;
+        this.includeFields = includeFields;
+        this.excludeFields = excludeFields;
         this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
         this.database = mongoClient.getDatabase(DBname);
         isCollectionExist();

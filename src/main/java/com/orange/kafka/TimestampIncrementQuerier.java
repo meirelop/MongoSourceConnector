@@ -1,6 +1,7 @@
 
 package com.orange.kafka;
 
+import com.mongodb.client.model.Projections;
 import com.orange.kafka.utils.DateUtils;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -45,6 +46,8 @@ public class TimestampIncrementQuerier extends TableQuerier{
     private Double lastIncrement;
     private Double recordIncrement;
     private String incrementColumn;
+    private String includeFields;
+    private String excludeFields;
 
     /**
      * Constructs and initailizes an TimestampIncrementQuerier.
@@ -63,17 +66,21 @@ public class TimestampIncrementQuerier extends TableQuerier{
                     String mongoUri,
                     String DBname,
                     String collectionName,
+                    String includeFields,
+                    String excludeFields,
                     String timestampColumn,
                     Instant lastDate,
                     String incrementColumn,
                     Double lastIncrement
             )
     {
-        super(topic, mongoUri,DBname,collectionName);
+        super(topic,mongoUri,DBname,collectionName, includeFields, excludeFields);
         this.topic = topic;
         this.timestampColumn = timestampColumn;
         this.DBname = DBname;
         this.collectionName = collectionName;
+        this.includeFields = includeFields;
+        this.excludeFields = excludeFields;
         this.lastDate = lastDate;
         this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
         this.database = mongoClient.getDatabase(DBname);
@@ -109,9 +116,17 @@ public class TimestampIncrementQuerier extends TableQuerier{
     }
 
     public void executeCursor() {
-        //collection.find().projection()
         BasicDBObject query = createQuery();
-        cursor = collection.find(query).iterator();
+        if(!excludeFields.isEmpty()) {
+            List<String> fieldsList = Arrays.asList(excludeFields.split("\\s*,\\s*"));
+            cursor = collection.find(query).projection(Projections.exclude(fieldsList)).iterator();
+        }
+        else if (!includeFields.isEmpty()) {
+            List<String> fieldsList = Arrays.asList(includeFields.split("\\s*,\\s*"));
+            cursor = collection.find(query).projection(Projections.include(fieldsList)).iterator();
+        }else {
+            cursor = collection.find(query).iterator();
+        }
     }
 
     public void closeCursor(){

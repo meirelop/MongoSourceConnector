@@ -51,7 +51,9 @@ public class MongodbSourceTask extends SourceTask {
                       topic,
                       config.getMongoUri(),
                       config.getMongoDbName(),
-                      config.getMongoCollectionName()
+                      config.getMongoCollectionName(),
+                      config.getIncludeFields(),
+                      config.getExcludeFields()
               )
       );
     } else if(mode.equals(MongodbSourceConnectorConfig.MODE_INCREMENTING)) {
@@ -63,6 +65,8 @@ public class MongodbSourceTask extends SourceTask {
                       config.getMongoUri(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
+                      config.getIncludeFields(),
+                      config.getExcludeFields(),
                       config.getIncrementColumn(),
                       lastIncrement
               )
@@ -76,6 +80,8 @@ public class MongodbSourceTask extends SourceTask {
                       config.getMongoUri(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
+                      config.getIncludeFields(),
+                      config.getExcludeFields(),
                       config.getTimestampColumn(),
                       lastDate
               )
@@ -89,6 +95,8 @@ public class MongodbSourceTask extends SourceTask {
                       config.getMongoUri(),
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
+                      config.getIncludeFields(),
+                      config.getExcludeFields(),
                       config.getTimestampColumn(),
                       lastDate,
                       config.getIncrementColumn(),

@@ -87,6 +87,14 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
                     + "column should not be nullable.";
   public static final String TIMESTAMP_COLUMN_NAME_DEFAULT = "";
 
+  public static final String EXCLUDE_FIELD_CONFIG = "collection.exclude";
+  private static final String EXCLUDE_FIELD_DOC = "List of fields to exclude from collection in result set";
+  public static final String EXCLUDE_DEFAULT = "";
+
+  public static final String INCLUDE_FIELD_CONFIG = "collection.include";
+  private static final String INCLUDE_FIELD_DOC = "List of fields to include from collection in result set";
+  public static final String INCLUDE_DEFAULT = "";
+
 
   public static ConfigDef conf() {
     return new ConfigDef()
@@ -105,7 +113,9 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
                     MODE_INCREMENTING,
                     MODE_TIMESTAMP_INCREMENTING),Importance.HIGH, MODE_DOC)
             .define(INCREMENTING_COLUMN_NAME_CONFIG, Type.STRING,INCREMENTING_COLUMN_NAME_DEFAULT, Importance.MEDIUM, INCREMENTING_COLUMN_NAME_DOC)
-            .define(TIMESTAMP_COLUMN_NAME_CONFIG, Type.STRING,TIMESTAMP_COLUMN_NAME_DEFAULT, Importance.MEDIUM, TIMESTAMP_COLUMN_NAME_DOC);
+            .define(TIMESTAMP_COLUMN_NAME_CONFIG, Type.STRING,TIMESTAMP_COLUMN_NAME_DEFAULT, Importance.MEDIUM, TIMESTAMP_COLUMN_NAME_DOC)
+            .define(INCLUDE_FIELD_CONFIG, Type.STRING, INCLUDE_DEFAULT, Importance.LOW, INCLUDE_FIELD_DOC)
+            .define(EXCLUDE_FIELD_CONFIG, Type.STRING, EXCLUDE_DEFAULT, Importance.LOW, EXCLUDE_FIELD_DOC);
   }
 
   public MongodbSourceConnectorConfig(ConfigDef config, Map<String, String> parsedConfig) {
@@ -152,6 +162,10 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
   public String getMongoDbName() {return this.getString(MONGO_DB_CONFIG);}
 
   public String getMongoQuery() { return this.getString(MONGO_QUERY_CONFIG);}
+
+  public String getExcludeFields() { return this.getString(EXCLUDE_FIELD_CONFIG);}
+
+  public String getIncludeFields() { return this.getString(INCLUDE_FIELD_CONFIG);}
 
   public String getMongoCollectionName() {
     return StringUtils.substringBetween(this.getMongoQuery(), "db.", ".find");

@@ -9,6 +9,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
+import com.mongodb.client.model.Projections;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -38,6 +39,8 @@ public class TimestampQuerier extends TableQuerier{
     private String collectionName;
     private Instant lastDate;
     private Instant recordDate;
+    private String includeFields;
+    private String excludeFields;
 
     /**
      * Constructs and initailizes an TimestampQuerier.
@@ -54,15 +57,19 @@ public class TimestampQuerier extends TableQuerier{
                     String mongoUri,
                     String DBname,
                     String collectionName,
+                    String includeFields,
+                    String excludeFields,
                     String timestampColumn,
                     Instant lastDate
             )
     {
-        super(topic,mongoUri, DBname,collectionName);
+        super(topic,mongoUri,DBname,collectionName, includeFields, excludeFields);
         this.topic = topic;
         this.timestampColumn = timestampColumn;
         this.DBname = DBname;
         this.collectionName = collectionName;
+        this.includeFields = includeFields;
+        this.excludeFields = excludeFields;
         this.lastDate = lastDate;
         this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
         this.database = mongoClient.getDatabase(DBname);
@@ -93,9 +100,17 @@ public class TimestampQuerier extends TableQuerier{
     }
 
     public void executeCursor() {
-        //collection.find().projection()
         BasicDBObject query = createQuery();
-        cursor = collection.find(query).iterator();
+        if(!excludeFields.isEmpty()) {
+            List<String> fieldsList = Arrays.asList(excludeFields.split("\\s*,\\s*"));
+            cursor = collection.find(query).projection(Projections.exclude(fieldsList)).iterator();
+        }
+        else if (!includeFields.isEmpty()) {
+            List<String> fieldsList = Arrays.asList(includeFields.split("\\s*,\\s*"));
+            cursor = collection.find(query).projection(Projections.include(fieldsList)).iterator();
+        }else {
+            cursor = collection.find(query).iterator();
+        }
     }
 
     public void closeCursor(){

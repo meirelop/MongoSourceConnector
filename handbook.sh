@@ -270,11 +270,14 @@ bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic test --from
 2. https://stackoverflow.com/questions/4904096/whats-the-difference-between-unit-functional-acceptance-and-integration-test
 
 
-
-
 -------MONGO Querying-----------
 1. Mongo aggregation with Java
 https://stackoverflow.com/questions/31643109/mongodb-aggregation-with-java-driver
+
+2.https://www.codota.com/code/java/methods/com.mongodb.BasicDBObject/parse
+
+2. Example of README configuration file
+https://github.com/mongodb/mongo-kafka/blob/master/docs/source.md
 
 
 ----POSTGRES-----
@@ -323,8 +326,6 @@ FROM base b
 - SELECT count(*) FROM DOCUMENT_TEMPLATE LIMIT 100;
 - \conninfo
 - ALTER USER meirkhan PASSWORD 'omotoh40';
-
-
 
 
 sudo curl -X PUT http://localhost:8083/connectors/jdbc_source_mysql_02/pause
