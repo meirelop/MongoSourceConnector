@@ -9,6 +9,7 @@ import com.mongodb.client.model.Projections;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.bson.Document;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +17,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.json.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * BulkCollectionQuerier always returns the entire collection.
  */
@@ -80,7 +83,17 @@ public class BulkCollectionQuerier extends TableQuerier{
     }
 
     public SourceRecord extractRecord() {
+        HashMap<String,Object> result = new HashMap<>();
         Document record = cursor.next();
+        String qsd = record.toJson();
+//        JSONObject jsonObject = new JSONObject(record.toJson());
+
+        try {
+            result = new ObjectMapper().readValue(qsd, HashMap.class);
+        } catch (Exception e) {
+
+        }
+
         return new SourceRecord(
                 sourcePartition(),
                 null,
@@ -89,6 +102,6 @@ public class BulkCollectionQuerier extends TableQuerier{
                 null,
                 null,
                 null,
-                record.toJson());
+                result);
     }
 }
