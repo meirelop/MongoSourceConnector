@@ -7,6 +7,13 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Projections;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.errors.ConnectException;
+import org.apache.kafka.connect.source.SourceRecord;
+import org.apache.kafka.connect.data.Field;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.data.Struct;
 import org.bson.Document;
 
 import java.io.IOException;
@@ -33,6 +40,7 @@ public class BulkCollectionQuerier extends TableQuerier{
     private String topic;
     private String includeFields;
     private String excludeFields;
+    private static final Schema VALUE_SCHEMA = Schema.STRING_SCHEMA;
 
 
     public BulkCollectionQuerier(String topic,
@@ -83,16 +91,25 @@ public class BulkCollectionQuerier extends TableQuerier{
     }
 
     public SourceRecord extractRecord() {
-        HashMap<String,Object> result = new HashMap<>();
+//        Struct line = new Struct(schemaMapping.schema());
+
+        Schema schema = SchemaBuilder.struct().name("name-of-schema")
+                .field("_id", Schema.STRING_SCHEMA)
+                .field("item", Schema.STRING_SCHEMA)
+                .field("qty", Schema.FLOAT32_SCHEMA)
+                .build();
+
+
+        Map<String,Object> result = new HashMap<>();
         Document record = cursor.next();
         String qsd = record.toJson();
-//        JSONObject jsonObject = new JSONObject(record.toJson());
-
         try {
-            result = new ObjectMapper().readValue(qsd, HashMap.class);
+            result = new ObjectMapper().readValue(qsd, Map.class);
         } catch (Exception e) {
 
         }
+
+        Struct struct = new Struct(schema);
 
         return new SourceRecord(
                 sourcePartition(),
@@ -101,7 +118,7 @@ public class BulkCollectionQuerier extends TableQuerier{
                 null, // partition will be inferred by the framework
                 null,
                 null,
-                null,
-                result);
+                schema,
+                struct);
     }
 }

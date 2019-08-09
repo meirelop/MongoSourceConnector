@@ -16,20 +16,23 @@ import com.mongodb.client.model.Projections;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.bson.Document;
 import com.mongodb.util.JSON;
+import java.util.*;
 
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.*;
 
 public class MyTests {
 
 
     public static void main(String[] args) {
-        String  mongoUri = "mongodb://testuser:pwd1@localhost:27020/test";
+        String mongoUri = "mongodb://testuser:pwd1@localhost:27020/test";
         String DBname = "test";
-        String collectionName = "products";
+        String collectionName = "table2";
 
         MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoUri));
         MongoDatabase database = mongoClient.getDatabase(DBname);
@@ -41,8 +44,19 @@ public class MyTests {
         while (cursor.hasNext()) {
             Document record = cursor.next();
             JSONObject jsonObject = new JSONObject(record.toJson());
-            System.out.println(jsonObject.getClass().getName());
-        }
+//            System.out.println(jsonObject);
+
+            Iterator<String> keys = jsonObject.keys();
+
+            while (keys.hasNext()) {
+                String key = keys.next();
+//                System.out.println(key);
+
+                if (jsonObject.get(key) instanceof JSONObject) {
+                    // do something with jsonObject here
+                    System.out.println(jsonObject.get(key));
+                }
+            }
 
 //        FindIterable<Document> dumps = collection.find();
 
@@ -55,7 +69,7 @@ public class MyTests {
 //        for (Document doc : dumps) {
 //            System.out.println(doc);
 //        }
-
+        }
     }
 }
 
