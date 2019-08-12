@@ -17,15 +17,16 @@ import org.apache.kafka.connect.data.Struct;
 import org.bson.Document;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.json.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import javax.xml.crypto.Data;
+
 /**
  * BulkCollectionQuerier always returns the entire collection.
  */
@@ -91,25 +92,10 @@ public class BulkCollectionQuerier extends TableQuerier{
     }
 
     public SourceRecord extractRecord() {
-//        Struct line = new Struct(schemaMapping.schema());
-
-        Schema schema = SchemaBuilder.struct().name("name-of-schema")
-                .field("_id", Schema.STRING_SCHEMA)
-                .field("item", Schema.STRING_SCHEMA)
-                .field("qty", Schema.FLOAT32_SCHEMA)
-                .build();
-
-
-        Map<String,Object> result = new HashMap<>();
         Document record = cursor.next();
-        String qsd = record.toJson();
-        try {
-            result = new ObjectMapper().readValue(qsd, Map.class);
-        } catch (Exception e) {
-
-        }
-
-        Struct struct = new Struct(schema);
+        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct();
+        Schema schema = new DataConverter().getSchema(record, valueSchemaBuilder);
+        Struct struct = new DataConverter().getStruct(record, schema);
 
         return new SourceRecord(
                 sourcePartition(),

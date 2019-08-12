@@ -30,9 +30,9 @@ public class MyTests {
 
 
     public static void main(String[] args) {
-        String mongoUri = "mongodb://testuser:pwd1@localhost:27020/test";
+        String mongoUri = "mongodb://localhost:27020/test";
         String DBname = "test";
-        String collectionName = "table2";
+        String collectionName = "tableInt";
 
         MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoUri));
         MongoDatabase database = mongoClient.getDatabase(DBname);
@@ -43,20 +43,23 @@ public class MyTests {
         MongoCursor<Document> cursor = collection.find().iterator();
         while (cursor.hasNext()) {
             Document record = cursor.next();
-            JSONObject jsonObject = new JSONObject(record.toJson());
+//            new DataConverter().getSchema(record);
+//            JSONObject jsonObject = new JSONObject(record.toJson());
 //            System.out.println(jsonObject);
 
-            Iterator<String> keys = jsonObject.keys();
 
-            while (keys.hasNext()) {
-                String key = keys.next();
-//                System.out.println(key);
 
-                if (jsonObject.get(key) instanceof JSONObject) {
-                    // do something with jsonObject here
-                    System.out.println(jsonObject.get(key));
-                }
-            }
+//            Iterator<String> keys = jsonObject.keys();
+//
+//            while (keys.hasNext()) {
+//                String key = keys.next();
+////                System.out.println(key);
+//
+//                if (jsonObject.get(key) instanceof JSONObject) {
+//                    // do something with jsonObject here
+//                    System.out.println(jsonObject.get(key));
+//                }
+//            }
 
 //        FindIterable<Document> dumps = collection.find();
 
