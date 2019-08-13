@@ -15,7 +15,6 @@ import static com.mongodb.client.model.Projections.include;
 import com.mongodb.client.model.Projections;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.bson.Document;
-import com.mongodb.util.JSON;
 import java.util.*;
 
 
@@ -32,7 +31,7 @@ public class MyTests {
     public static void main(String[] args) {
         String mongoUri = "mongodb://localhost:27020/test";
         String DBname = "test";
-        String collectionName = "collection";
+        String collectionName = "test";
 
         MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoUri));
         MongoDatabase database = mongoClient.getDatabase(DBname);
@@ -46,13 +45,8 @@ public class MyTests {
 //            new DataConverter().getSchema(record);
             JSONObject jsonObject = new JSONObject(record.toJson());
             System.out.println(jsonObject);
-            System.out.println(jsonObject.get("date").getClass());
-            System.out.println(record.get("date").getClass());
+            System.out.println(record.get("ts").getClass());
 
-            Object o = record.get("date");
-            Date nsd = new Date();
-            System.out.println(nsd);
-            nsd.getTime();
 
 
 //            Iterator<String> keys = jsonObject.keys();

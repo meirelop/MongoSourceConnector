@@ -9,6 +9,7 @@ import com.mongodb.client.model.Projections;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.data.Struct;
 import org.bson.Document;
 import java.util.*;
@@ -30,8 +31,7 @@ public class BulkCollectionQuerier extends TableQuerier{
     private String topic;
     private String includeFields;
     private String excludeFields;
-    private static final Schema VALUE_SCHEMA = Schema.STRING_SCHEMA;
-
+    private DataConverter converter = new DataConverter();
 
     public BulkCollectionQuerier(String topic,
                                  String mongoUri,
@@ -82,9 +82,11 @@ public class BulkCollectionQuerier extends TableQuerier{
 
     public SourceRecord extractRecord() {
         Document record = cursor.next();
-        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct();
-        Schema schema = new DataConverter(collectionName).getSchema(record, valueSchemaBuilder);
-        Struct struct = new DataConverter().getStruct(record, schema);
+
+        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct().name(collectionName);
+        converter.addFieldSchema(record, valueSchemaBuilder);
+        Schema schema = valueSchemaBuilder.build();
+        Struct struct = converter.setFieldStruct(record, schema);
 
         return new SourceRecord(
                 sourcePartition(),

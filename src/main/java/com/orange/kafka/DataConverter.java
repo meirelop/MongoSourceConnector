@@ -11,24 +11,15 @@ import java.util.*;
 
 public class DataConverter {
 
-    public String schemaName;
-    Schema schema;
-
     public DataConverter() {
     }
 
-    public DataConverter(String schemaName) {
-        this.schemaName = schemaName;
-    }
-
-    public Schema getSchema(Document record, SchemaBuilder builder){
+    public void addFieldSchema (Document record, SchemaBuilder builder){
         JSONObject jsonObject = new JSONObject(record.toJson());
         Set<String> keys = jsonObject.keySet();
 
         for (String key: keys) {
             Object value = record.get(key);
-//            System.out.println(key);
-//            System.out.println(value.getClass());
 
             if(value instanceof String) {
                 builder.field(key, Schema.OPTIONAL_STRING_SCHEMA);
@@ -43,21 +34,17 @@ public class DataConverter {
             }else if(value instanceof ObjectId) {
                 builder.field(key, Schema.OPTIONAL_STRING_SCHEMA);
             }else if(value instanceof Document) {
-                builder.field(key, Schema.OPTIONAL_STRING_SCHEMA);
-//                SchemaBuilder builderDoc = SchemaBuilder.struct().name(builder.name() + "." + key).optional();
-//                getSchema((Document) value, builderDoc);
-//                builder.field(key, builderDoc.build());
+                SchemaBuilder builderDoc = SchemaBuilder.struct().name(builder.name() + "." + key).optional();
+                addFieldSchema((Document) value, builderDoc);
+                builder.field(key, builderDoc.build());
             }
             else {
                 builder.field(key, Schema.OPTIONAL_STRING_SCHEMA);
             }
         }
-        schema = builder.build();
-        System.out.println(schema.fields());
-        return schema;
     }
 
-    public Struct getStruct(Document record, Schema schema) {
+    public Struct setFieldStruct(Document record, Schema schema) {
         JSONObject jsonObject = new JSONObject(record.toJson());
         Set<String> keys = jsonObject.keySet();
         Struct struct = new Struct(schema);
@@ -81,9 +68,9 @@ public class DataConverter {
             }else if(value instanceof ObjectId) {
                 struct.put(key, (String) value.toString());
             }else if(value instanceof Document) {
-//                getStruct((Document) value, subSchema);
-//                struct.put(key, (Document) value);
-                struct.put(key, ((Document) value).toJson());
+                Schema subSchema = schema.field(key).schema();
+                Struct subStruct = setFieldStruct((Document) value, subSchema);
+                struct.put(key, subStruct);
             }
             else {
                 struct.put(key, (String) value.toString());

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite tests="2" failures="0" name="com.orange.kafka.MongodbSourceConnectorTest" time="0.086" errors="0" skipped="0">
+<testsuite tests="2" failures="0" name="com.orange.kafka.MongodbSourceConnectorTest" time="0.088" errors="0" skipped="0">
   <properties>
     <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
     <property name="sun.boot.library.path" value="/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64"/>
@@ -62,6 +62,6 @@
     <property name="sun.desktop" value="gnome"/>
     <property name="sun.cpu.isalist" value=""/>
   </properties>
-  <testcase classname="com.orange.kafka.MongodbSourceConnectorTest" name="taskConfigsShouldReturnOneTaskConfig" time="0.085"/>
-  <testcase classname="com.orange.kafka.MongodbSourceConnectorTest" name="test" time="0.001"/>
+  <testcase classname="com.orange.kafka.MongodbSourceConnectorTest" name="taskConfigsShouldReturnOneTaskConfig" time="0.084"/>
+  <testcase classname="com.orange.kafka.MongodbSourceConnectorTest" name="test" time="0.004"/>
 </testsuite>

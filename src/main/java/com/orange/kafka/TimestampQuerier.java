@@ -44,6 +44,7 @@ public class TimestampQuerier extends TableQuerier{
     private Instant recordDate;
     private String includeFields;
     private String excludeFields;
+    private DataConverter converter = new DataConverter();
 
     /**
      * Constructs and initailizes an TimestampQuerier.
@@ -128,9 +129,10 @@ public class TimestampQuerier extends TableQuerier{
     public SourceRecord extractRecord() {
         Document record = cursor.next();
         recordDate = record.getDate(timestampColumn).toInstant();
-        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct();
-        Schema schema = new DataConverter(collectionName).getSchema(record, valueSchemaBuilder);
-        Struct struct = new DataConverter().getStruct(record, schema);
+        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct().name(collectionName);
+        converter.addFieldSchema(record, valueSchemaBuilder);
+        Schema schema = valueSchemaBuilder.build();
+        Struct struct = converter.setFieldStruct(record, schema);
 
         return new SourceRecord(
                 sourcePartition(),

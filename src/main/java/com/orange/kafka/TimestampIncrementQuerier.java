@@ -51,6 +51,7 @@ public class TimestampIncrementQuerier extends TableQuerier{
     private String incrementColumn;
     private String includeFields;
     private String excludeFields;
+    private DataConverter converter = new DataConverter();
 
     /**
      * Constructs and initailizes an TimestampIncrementQuerier.
@@ -146,9 +147,10 @@ public class TimestampIncrementQuerier extends TableQuerier{
         recordDate = record.getDate(timestampColumn).toInstant();
         recordIncrement = record.getDouble(incrementColumn);
 
-        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct();
-        Schema schema = new DataConverter(collectionName).getSchema(record, valueSchemaBuilder);
-        Struct struct = new DataConverter().getStruct(record, schema);
+        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct().name(collectionName);
+        converter.addFieldSchema(record, valueSchemaBuilder);
+        Schema schema = valueSchemaBuilder.build();
+        Struct struct = converter.setFieldStruct(record, schema);
 
         return new SourceRecord(
                 sourcePartition(),

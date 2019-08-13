@@ -42,6 +42,7 @@ public class IncrementQuerier extends TableQuerier{
     private String collectionName;
     private String includeFields;
     private String excludeFields;
+    private DataConverter converter = new DataConverter();
 
     /**
      * Constructs and initailizes an IncrementQuerier.
@@ -127,9 +128,10 @@ public class IncrementQuerier extends TableQuerier{
         Document record = cursor.next();
         recordIncrement = record.getDouble(incrementColumn);
 
-        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct();
-        Schema schema = new DataConverter(collectionName).getSchema(record, valueSchemaBuilder);
-        Struct struct = new DataConverter().getStruct(record, schema);
+        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct().name(collectionName);
+        converter.addFieldSchema(record, valueSchemaBuilder);
+        Schema schema = valueSchemaBuilder.build();
+        Struct struct = converter.setFieldStruct(record, schema);
 
         return new SourceRecord(
                 sourcePartition(),
