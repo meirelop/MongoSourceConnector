@@ -46,6 +46,10 @@ public class MyTests {
             JSONObject jsonObject = new JSONObject(record.toJson());
             System.out.println(jsonObject);
             System.out.println(record.get("ts").getClass());
+            Object o = record.get("ts");
+            org.bson.BsonTimestamp q = (org.bson.BsonTimestamp) o;
+            int res = q.getTime();
+
 
 
 

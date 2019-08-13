@@ -3,6 +3,7 @@ package com.orange.kafka;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
+import org.bson.BsonTimestamp;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.json.JSONObject;
@@ -23,14 +24,16 @@ public class DataConverter {
 
             if(value instanceof String) {
                 builder.field(key, Schema.OPTIONAL_STRING_SCHEMA);
-            }else if(value instanceof Integer) {
+            }else if(value instanceof Integer
+                    || value instanceof java.util.Date
+                    || value instanceof BsonTimestamp) {
                 builder.field(key, Schema.OPTIONAL_INT32_SCHEMA);
             }else if(value instanceof Double) {
                 builder.field(key, Schema.OPTIONAL_FLOAT64_SCHEMA);
+            }else if(value instanceof Long) {
+                builder.field(key, Schema.OPTIONAL_INT64_SCHEMA);
             }else if(value instanceof Boolean) {
                 builder.field(key, Schema.OPTIONAL_BOOLEAN_SCHEMA);
-            }else if(value instanceof java.util.Date) {
-                builder.field(key, Schema.OPTIONAL_INT32_SCHEMA);
             }else if(value instanceof ObjectId) {
                 builder.field(key, Schema.OPTIONAL_STRING_SCHEMA);
             }else if(value instanceof Document) {
@@ -55,16 +58,18 @@ public class DataConverter {
                 struct.put(key, (String) value);
             }else if(value instanceof Integer) {
                 struct.put(key, (int) value);
-            }else if(value instanceof Double) {
+            }else if(value instanceof Double ) {
                 struct.put(key, (Double) value);
+            }else if(value instanceof Long) {
+                struct.put(key, (Long) value);
             }else if(value instanceof Float) {
                 struct.put(key, (Float) value);
             }else if(value instanceof Boolean) {
                 struct.put(key, (boolean) value);
             }else if(value instanceof java.util.Date) {
-                struct.put(key, (int) ((java.util.Date) value).getTime());
-            }else if(value instanceof Timestamp) {
-                struct.put(key, (Timestamp) value);
+                struct.put(key, (int) ((java.util.Date) value).getTime()/1000);
+            }else if(value instanceof org.bson.BsonTimestamp) {
+                struct.put(key, ((BsonTimestamp) value).getTime());
             }else if(value instanceof ObjectId) {
                 struct.put(key, (String) value.toString());
             }else if(value instanceof Document) {
@@ -80,3 +85,4 @@ public class DataConverter {
         return struct;
     }
 }
+
