@@ -283,7 +283,8 @@ https://github.com/mongodb/mongo-kafka/blob/master/docs/source.md
 ----POSTGRES-----
 1. Install postgres
 https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-18-04
-
+bin/connect-standalone etc/schema-registry/connect-avro-standalone.properties jdbc.properties
+bin/kafka-console-consumer --bootstrap-server localhost:9092 --topic test2-example --from-beginning
 
 
 INSERT INTO DOCUMENT_TEMPLATE(id, name, short_description, author,

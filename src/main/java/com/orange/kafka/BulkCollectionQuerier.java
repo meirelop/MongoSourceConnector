@@ -8,24 +8,13 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Projections;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.data.Schema;
-import org.apache.kafka.connect.errors.ConnectException;
-import org.apache.kafka.connect.source.SourceRecord;
-import org.apache.kafka.connect.data.Field;
-import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.bson.Document;
-
-import java.io.IOException;
 import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import org.json.JSONObject;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import javax.xml.crypto.Data;
 
 /**
  * BulkCollectionQuerier always returns the entire collection.
@@ -94,7 +83,7 @@ public class BulkCollectionQuerier extends TableQuerier{
     public SourceRecord extractRecord() {
         Document record = cursor.next();
         SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct();
-        Schema schema = new DataConverter().getSchema(record, valueSchemaBuilder);
+        Schema schema = new DataConverter(collectionName).getSchema(record, valueSchemaBuilder);
         Struct struct = new DataConverter().getStruct(record, schema);
 
         return new SourceRecord(

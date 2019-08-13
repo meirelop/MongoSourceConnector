@@ -10,6 +10,9 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
 import com.mongodb.client.model.Projections;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -125,6 +128,9 @@ public class TimestampQuerier extends TableQuerier{
     public SourceRecord extractRecord() {
         Document record = cursor.next();
         recordDate = record.getDate(timestampColumn).toInstant();
+        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct();
+        Schema schema = new DataConverter(collectionName).getSchema(record, valueSchemaBuilder);
+        Struct struct = new DataConverter().getStruct(record, schema);
 
         return new SourceRecord(
                 sourcePartition(),
@@ -133,7 +139,7 @@ public class TimestampQuerier extends TableQuerier{
                 null, // partition will be inferred by the framework
                 null,
                 null,
-                null,
-                record.toJson());
+                schema,
+                struct);
     }
 }

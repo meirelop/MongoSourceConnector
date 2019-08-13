@@ -10,6 +10,9 @@ import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -143,6 +146,10 @@ public class TimestampIncrementQuerier extends TableQuerier{
         recordDate = record.getDate(timestampColumn).toInstant();
         recordIncrement = record.getDouble(incrementColumn);
 
+        SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct();
+        Schema schema = new DataConverter(collectionName).getSchema(record, valueSchemaBuilder);
+        Struct struct = new DataConverter().getStruct(record, schema);
+
         return new SourceRecord(
                 sourcePartition(),
                 sourceOffset(),
@@ -150,7 +157,7 @@ public class TimestampIncrementQuerier extends TableQuerier{
                 null, // partition will be inferred by the framework
                 null,
                 null,
-                null,
-                record.toJson());
+                schema,
+                struct);
     }
 }

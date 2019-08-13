@@ -32,7 +32,7 @@ public class MyTests {
     public static void main(String[] args) {
         String mongoUri = "mongodb://localhost:27020/test";
         String DBname = "test";
-        String collectionName = "tableInt";
+        String collectionName = "collection";
 
         MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoUri));
         MongoDatabase database = mongoClient.getDatabase(DBname);
@@ -44,9 +44,15 @@ public class MyTests {
         while (cursor.hasNext()) {
             Document record = cursor.next();
 //            new DataConverter().getSchema(record);
-//            JSONObject jsonObject = new JSONObject(record.toJson());
-//            System.out.println(jsonObject);
+            JSONObject jsonObject = new JSONObject(record.toJson());
+            System.out.println(jsonObject);
+            System.out.println(jsonObject.get("date").getClass());
+            System.out.println(record.get("date").getClass());
 
+            Object o = record.get("date");
+            Date nsd = new Date();
+            System.out.println(nsd);
+            nsd.getTime();
 
 
 //            Iterator<String> keys = jsonObject.keys();
