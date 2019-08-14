@@ -14,10 +14,10 @@ import static com.mongodb.client.model.Projections.include;
 
 import com.mongodb.client.model.Projections;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.BsonDocument;
 import java.util.*;
-
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
@@ -51,13 +51,13 @@ public class MyTests {
 //            Object o = record.get("ts");
 //            org.bson.BsonTimestamp q = (org.bson.BsonTimestamp) o;
 //            int res = q.getTime();
-            System.out.println(record.get("_id"));
 
 
-            ObjectId objectID = (ObjectId) record.remove("_id");
-            System.out.println(objectID);
-            System.out.println(record);
-
+            BsonDocument bsonDoc = record.toBsonDocument(BsonDocument.class, MongoClient.getDefaultCodecRegistry());
+            System.out.println(bsonDoc.entrySet());
+            for (Map.Entry<String, BsonValue> keyPairsForSchema : bsonDoc.entrySet()) {
+                System.out.println(keyPairsForSchema.getValue());
+            }
 
 
 //            Iterator<String> keys = jsonObject.keys();

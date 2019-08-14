@@ -53,8 +53,7 @@ public class MongodbSourceTask extends SourceTask {
                       config.getMongoDbName(),
                       config.getMongoCollectionName(),
                       config.getIncludeFields(),
-                      config.getExcludeFields()
-              )
+                      config.getExcludeFields())
       );
     } else if(mode.equals(MongodbSourceConnectorConfig.MODE_INCREMENTING)) {
       log.info("Creating IncrementQuerier instance");

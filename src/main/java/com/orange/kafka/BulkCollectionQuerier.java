@@ -13,6 +13,7 @@ import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.data.Struct;
 import org.bson.Document;
 import java.util.*;
+import static com.orange.kafka.MongodbSourceConnectorConfig.*;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -39,8 +40,7 @@ public class BulkCollectionQuerier extends TableQuerier{
                                  String DBname,
                                  String collectionName,
                                  String includeFields,
-                                 String excludeFields
-                                 ) {
+                                 String excludeFields) {
         super(topic,mongoUri,DBname,collectionName, includeFields, excludeFields);
 
         this.topic = topic;
@@ -93,7 +93,6 @@ public class BulkCollectionQuerier extends TableQuerier{
         Schema valueSchema = valueSchemaBuilder.build();
         Struct valueStruct = converter.setFieldStruct(record, valueSchema);
 
-
         return new SourceRecord(
                 sourcePartition(),
                 null,
@@ -104,5 +103,4 @@ public class BulkCollectionQuerier extends TableQuerier{
                 valueSchema,
                 valueStruct);
     }
-
 }

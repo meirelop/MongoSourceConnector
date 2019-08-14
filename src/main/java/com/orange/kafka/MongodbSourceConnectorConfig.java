@@ -95,6 +95,12 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
   private static final String INCLUDE_FIELD_DOC = "List of fields to include from collection in result set";
   public static final String INCLUDE_DEFAULT = "";
 
+  public static final String ARRAY_ENCODING_CONFIG = "array.encoding";
+  private static final String ARRAY_ENCODING_DEFAULT = "array";
+  public static final String ARRAY_ENCODING_DOC = "The arrays can be encoded using 'array' schema type (the default) or as a 'document' (similar to how BSON encodes arrays). "
+          + "'array' is easier to consume but requires all elements in the array to be of the same type. "
+          + "Use 'document' if the arrays in data source mix different types together.";
+
 
   public static ConfigDef conf() {
     return new ConfigDef()
@@ -115,7 +121,8 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
             .define(INCREMENTING_COLUMN_NAME_CONFIG, Type.STRING,INCREMENTING_COLUMN_NAME_DEFAULT, Importance.MEDIUM, INCREMENTING_COLUMN_NAME_DOC)
             .define(TIMESTAMP_COLUMN_NAME_CONFIG, Type.STRING,TIMESTAMP_COLUMN_NAME_DEFAULT, Importance.MEDIUM, TIMESTAMP_COLUMN_NAME_DOC)
             .define(INCLUDE_FIELD_CONFIG, Type.STRING, INCLUDE_DEFAULT, Importance.LOW, INCLUDE_FIELD_DOC)
-            .define(EXCLUDE_FIELD_CONFIG, Type.STRING, EXCLUDE_DEFAULT, Importance.LOW, EXCLUDE_FIELD_DOC);
+            .define(EXCLUDE_FIELD_CONFIG, Type.STRING, EXCLUDE_DEFAULT, Importance.LOW, EXCLUDE_FIELD_DOC)
+            .define(ARRAY_ENCODING_CONFIG, Type.STRING, ARRAY_ENCODING_DEFAULT, Importance.LOW, ARRAY_ENCODING_DOC);
   }
 
   public MongodbSourceConnectorConfig(ConfigDef config, Map<String, String> parsedConfig) {
@@ -187,5 +194,7 @@ public class MongodbSourceConnectorConfig extends AbstractConfig {
   public String getIncrementColumn() {return this.getString(INCREMENTING_COLUMN_NAME_CONFIG);}
 
   public String getTimestampColumn() {return this.getString(TIMESTAMP_COLUMN_NAME_CONFIG);}
+
+  public String getArrayEncoding() {return this.getString(ARRAY_ENCODING_CONFIG);}
 
 }
