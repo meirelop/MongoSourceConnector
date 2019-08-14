@@ -11,8 +11,12 @@ import org.apache.kafka.connect.data.Timestamp;
 import java.util.*;
 
 public class DataConverter {
+    Schema keySchema = getKeySchema();
 
     public DataConverter() {
+        SchemaBuilder keySchemaBuilder = SchemaBuilder.struct();
+        keySchemaBuilder.field("_id", Schema.OPTIONAL_STRING_SCHEMA);
+        Schema keySchema = keySchemaBuilder.build();
     }
 
     public void addFieldSchema (Document record, SchemaBuilder builder){
@@ -82,6 +86,18 @@ public class DataConverter {
             }
         }
 
+        return struct;
+    }
+
+    public Schema getKeySchema() {
+        SchemaBuilder schemaBuilder = SchemaBuilder.struct();
+        schemaBuilder.field("_id", Schema.OPTIONAL_STRING_SCHEMA);
+        return schemaBuilder.build();
+    }
+
+    public Struct getKeyStruct(ObjectId objectID) {
+        Struct struct = new Struct(keySchema);
+        struct.put("_id", objectID.toString());
         return struct;
     }
 }

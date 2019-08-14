@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+
+import org.bson.types.ObjectId;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.*;
@@ -43,13 +45,18 @@ public class MyTests {
         while (cursor.hasNext()) {
             Document record = cursor.next();
 //            new DataConverter().getSchema(record);
-            JSONObject jsonObject = new JSONObject(record.toJson());
-            System.out.println(jsonObject);
-            System.out.println(record.get("ts").getClass());
-            Object o = record.get("ts");
-            org.bson.BsonTimestamp q = (org.bson.BsonTimestamp) o;
-            int res = q.getTime();
+//            JSONObject jsonObject = new JSONObject(record.toJson());
+//            System.out.println(jsonObject);
+//            System.out.println(record.get("ts").getClass());
+//            Object o = record.get("ts");
+//            org.bson.BsonTimestamp q = (org.bson.BsonTimestamp) o;
+//            int res = q.getTime();
+            System.out.println(record.get("_id"));
 
+
+            ObjectId objectID = (ObjectId) record.remove("_id");
+            System.out.println(objectID);
+            System.out.println(record);
 
 
 

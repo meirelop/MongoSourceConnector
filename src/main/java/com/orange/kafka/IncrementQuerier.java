@@ -14,6 +14,7 @@ import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,19 +129,23 @@ public class IncrementQuerier extends TableQuerier{
         Document record = cursor.next();
         recordIncrement = record.getDouble(incrementColumn);
 
+        ObjectId objectID = (ObjectId) record.remove("_id");
+        Schema keySchema = converter.keySchema;
+        Struct keyStruct = converter.getKeyStruct(objectID);
+
         SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct().name(collectionName);
         converter.addFieldSchema(record, valueSchemaBuilder);
-        Schema schema = valueSchemaBuilder.build();
-        Struct struct = converter.setFieldStruct(record, schema);
+        Schema valueSchema = valueSchemaBuilder.build();
+        Struct valueStruct = converter.setFieldStruct(record, valueSchema);
 
         return new SourceRecord(
                 sourcePartition(),
                 sourceOffset(),
                 topic,
                 null,
-                null,
-                null,
-                schema,
-                struct);
+                keySchema,
+                keyStruct,
+                valueSchema,
+                valueStruct);
     }
 }

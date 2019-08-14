@@ -15,6 +15,7 @@ import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.time.Instant;
@@ -147,19 +148,23 @@ public class TimestampIncrementQuerier extends TableQuerier{
         recordDate = record.getDate(timestampColumn).toInstant();
         recordIncrement = record.getDouble(incrementColumn);
 
+        ObjectId objectID = (ObjectId) record.remove("_id");
+        Schema keySchema = converter.keySchema;
+        Struct keyStruct = converter.getKeyStruct(objectID);
+
         SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct().name(collectionName);
         converter.addFieldSchema(record, valueSchemaBuilder);
-        Schema schema = valueSchemaBuilder.build();
-        Struct struct = converter.setFieldStruct(record, schema);
+        Schema valueSchema = valueSchemaBuilder.build();
+        Struct valueStruct = converter.setFieldStruct(record, valueSchema);
 
         return new SourceRecord(
                 sourcePartition(),
                 sourceOffset(),
                 topic,
                 null, // partition will be inferred by the framework
-                null,
-                null,
-                schema,
-                struct);
+                keySchema,
+                keyStruct,
+                valueSchema,
+                valueStruct);
     }
 }

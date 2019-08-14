@@ -14,6 +14,7 @@ import org.apache.kafka.connect.data.Struct;
 import org.bson.Document;
 import java.util.*;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,19 +84,25 @@ public class BulkCollectionQuerier extends TableQuerier{
     public SourceRecord extractRecord() {
         Document record = cursor.next();
 
+        ObjectId objectID = (ObjectId) record.remove("_id");
+        Schema keySchema = converter.keySchema;
+        Struct keyStruct = converter.getKeyStruct(objectID);
+
         SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct().name(collectionName);
         converter.addFieldSchema(record, valueSchemaBuilder);
-        Schema schema = valueSchemaBuilder.build();
-        Struct struct = converter.setFieldStruct(record, schema);
+        Schema valueSchema = valueSchemaBuilder.build();
+        Struct valueStruct = converter.setFieldStruct(record, valueSchema);
+
 
         return new SourceRecord(
                 sourcePartition(),
                 null,
                 topic,
                 null, // partition will be inferred by the framework
-                null,
-                null,
-                schema,
-                struct);
+                keySchema,
+                keyStruct,
+                valueSchema,
+                valueStruct);
     }
+
 }
