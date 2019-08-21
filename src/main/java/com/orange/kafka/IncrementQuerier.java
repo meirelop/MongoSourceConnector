@@ -13,10 +13,13 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.bson.BsonDocument;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.orange.kafka.MongodbSourceTask.ArrayEncoding;
 
 import java.util.*;
 import java.lang.Math;
@@ -43,7 +46,7 @@ public class IncrementQuerier extends TableQuerier{
     private String collectionName;
     private String includeFields;
     private String excludeFields;
-    private DataConverter converter = new DataConverter();
+    private ArrayEncoding arrayEncoding;
 
     /**
      * Constructs and initailizes an IncrementQuerier.
@@ -55,7 +58,7 @@ public class IncrementQuerier extends TableQuerier{
      * @param lastIncrement last value of increment ID, querier will take records bigger than this value
      */
     public IncrementQuerier
-            (
+            (       ArrayEncoding arrayEncoding,
                     String topic,
                     String mongoUri,
                     String DBname,
@@ -66,7 +69,8 @@ public class IncrementQuerier extends TableQuerier{
                     Double lastIncrement
             )
     {
-        super(topic,mongoUri,DBname,collectionName, includeFields, excludeFields);
+        super(arrayEncoding,topic,mongoUri,DBname,collectionName, includeFields, excludeFields);
+        this.arrayEncoding = arrayEncoding;
         this.topic = topic;
         this.incrementColumn = incrementColumn;
         this.lastIncrement = lastIncrement;
@@ -126,26 +130,27 @@ public class IncrementQuerier extends TableQuerier{
 
     @Override
     public SourceRecord extractRecord() {
+        DataConverter converter = new DataConverter(arrayEncoding);
         Document record = cursor.next();
         recordIncrement = record.getDouble(incrementColumn);
-
-        ObjectId objectID = (ObjectId) record.remove("_id");
-        Schema keySchema = converter.keySchema;
-        Struct keyStruct = converter.getKeyStruct(objectID);
+        BsonDocument bsonRecord = record.toBsonDocument(BsonDocument.class, MongoClient.getDefaultCodecRegistry());
+        Set<Map.Entry<String, BsonValue>> keyValuePairs = bsonRecord.entrySet();
 
         SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct().name(collectionName);
-        converter.addFieldSchema(record, valueSchemaBuilder);
+        converter.setSchema(keyValuePairs, valueSchemaBuilder);
         Schema valueSchema = valueSchemaBuilder.build();
-        Struct valueStruct = converter.setFieldStruct(record, valueSchema);
+
+        Struct value = new Struct(valueSchema);
+        converter.setStruct(keyValuePairs, value, valueSchema);
 
         return new SourceRecord(
                 sourcePartition(),
                 sourceOffset(),
                 topic,
                 null,
-                keySchema,
-                keyStruct,
+                null,
+                null,
                 valueSchema,
-                valueStruct);
+                value);
     }
 }

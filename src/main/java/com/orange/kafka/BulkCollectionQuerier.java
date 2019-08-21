@@ -11,8 +11,11 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.data.Struct;
+import org.bson.BsonDocument;
+import org.bson.BsonValue;
 import org.bson.Document;
 import java.util.*;
+import com.orange.kafka.MongodbSourceTask.ArrayEncoding;
 import static com.orange.kafka.MongodbSourceConnectorConfig.*;
 
 import org.bson.types.ObjectId;
@@ -33,16 +36,18 @@ public class BulkCollectionQuerier extends TableQuerier{
     private String topic;
     private String includeFields;
     private String excludeFields;
-    private DataConverter converter = new DataConverter();
+    private MongodbSourceTask.ArrayEncoding arrayEncoding;
 
-    public BulkCollectionQuerier(String topic,
+    public BulkCollectionQuerier(ArrayEncoding arrayEncoding,
+                                 String topic,
                                  String mongoUri,
                                  String DBname,
                                  String collectionName,
                                  String includeFields,
                                  String excludeFields) {
-        super(topic,mongoUri,DBname,collectionName, includeFields, excludeFields);
+        super(arrayEncoding,topic,mongoUri,DBname,collectionName, includeFields, excludeFields);
 
+        this.arrayEncoding = arrayEncoding;
         this.topic = topic;
         this.collectionName = collectionName;
         this.DBname = DBname;
@@ -83,24 +88,30 @@ public class BulkCollectionQuerier extends TableQuerier{
 
     public SourceRecord extractRecord() {
         Document record = cursor.next();
+        DataConverter converter = new DataConverter(arrayEncoding);
 
-        ObjectId objectID = (ObjectId) record.remove("_id");
-        Schema keySchema = converter.keySchema;
-        Struct keyStruct = converter.getKeyStruct(objectID);
+//        ObjectId objectID = (ObjectId) record.remove("_id");
+//        Schema keySchema = converter.keySchema;
+//        Struct keyStruct = converter.getKeyStruct(objectID);
+
+        BsonDocument bsonRecord = record.toBsonDocument(BsonDocument.class, MongoClient.getDefaultCodecRegistry());
+        Set<Map.Entry<String, BsonValue>> keyValuePairs = bsonRecord.entrySet();
 
         SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct().name(collectionName);
-        converter.addFieldSchema(record, valueSchemaBuilder);
+        converter.setSchema(keyValuePairs, valueSchemaBuilder);
         Schema valueSchema = valueSchemaBuilder.build();
-        Struct valueStruct = converter.setFieldStruct(record, valueSchema);
+
+        Struct value = new Struct(valueSchema);
+        converter.setStruct(keyValuePairs, value, valueSchema);
 
         return new SourceRecord(
                 sourcePartition(),
                 null,
                 topic,
-                null, // partition will be inferred by the framework
-                keySchema,
-                keyStruct,
+                null,
+                null,
+                null,
                 valueSchema,
-                valueStruct);
+                value);
     }
 }

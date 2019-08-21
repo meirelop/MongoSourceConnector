@@ -26,10 +26,19 @@ public class MongodbSourceTask extends SourceTask {
   protected Double lastIncrement;
   private PriorityQueue<TableQuerier> tableQueue = new PriorityQueue<TableQuerier>();
 
+  public enum ArrayEncoding {
+    ARRAY("array"),
+    DOCUMENT("document");
+
+    private final String name;
+    ArrayEncoding(String name) { this.name = name; }
+  }
+
   @Override
   public String version() {
     return VersionUtil.getVersion();
   }
+
 
   @Override
   public void start(Map<String, String> map) {
@@ -43,11 +52,18 @@ public class MongodbSourceTask extends SourceTask {
     String mode = config.getModeName();
     String topic = config.getTopicPrefix();
 
+    ArrayEncoding arrayEncoding;
+    if (config.getArrayEncoding().equals("array")) {
+      arrayEncoding = ArrayEncoding.ARRAY;
+    } else {
+      arrayEncoding = ArrayEncoding.DOCUMENT;
+    }
 
     if(mode.equals(MongodbSourceConnectorConfig.MODE_BULK)) {
       log.info("Creating BatchQuerier instance");
       tableQueue.add(
               new BulkCollectionQuerier(
+                      arrayEncoding,
                       topic,
                       config.getMongoUri(),
                       config.getMongoDbName(),
@@ -60,6 +76,7 @@ public class MongodbSourceTask extends SourceTask {
       initializeLastVariables();
       tableQueue.add(
               new IncrementQuerier(
+                      arrayEncoding,
                       topic,
                       config.getMongoUri(),
                       config.getMongoDbName(),
@@ -75,6 +92,7 @@ public class MongodbSourceTask extends SourceTask {
       initializeLastVariables();
       tableQueue.add(
               new TimestampQuerier(
+                      arrayEncoding,
                       topic,
                       config.getMongoUri(),
                       config.getMongoDbName(),
@@ -90,6 +108,7 @@ public class MongodbSourceTask extends SourceTask {
       initializeLastVariables();
       tableQueue.add(
               new TimestampIncrementQuerier(
+                      arrayEncoding,
                       topic,
                       config.getMongoUri(),
                       config.getMongoDbName(),

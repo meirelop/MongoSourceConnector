@@ -10,6 +10,7 @@ import org.apache.kafka.connect.source.SourceRecord;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
+import com.orange.kafka.MongodbSourceTask.ArrayEncoding;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ abstract class TableQuerier {
     private String topic;
     private String includeFields;
     private String excludeFields;
+    private ArrayEncoding arrayEncoding;
 
     /**
      * Constructs and initailizes a TableQuerier.
@@ -42,6 +44,7 @@ abstract class TableQuerier {
      */
 
     public TableQuerier(
+                        ArrayEncoding arrayEncoding,
                         String topic,
                         String mongoUri,
                         String DBname,
@@ -49,7 +52,8 @@ abstract class TableQuerier {
                         String includeFields,
                         String excludeFields
                         )
-    {   this.topic = topic;
+    {   this.arrayEncoding = arrayEncoding;
+        this.topic = topic;
         this.mongoUri = mongoUri;
         this.DBname = DBname;
         this.collectionName = collectionName;

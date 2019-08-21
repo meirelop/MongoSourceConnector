@@ -350,3 +350,25 @@ insert into table1(ID, name, created)  select ID, name, created FROM DOCUMENT_TE
 
 
 
+
+
+------------------Mongodb Types --------------
+1. BIN
+Java throws error 'org.bson.BsonSerializationException: Binary sub type OldBinary has inconsistent sizes' while executing cursor on collection with binData
+var a = new BinData(2, "1234")
+db.bin.insert({"data":a})
+
+var w = new BinData(2,"nCgNlWhzJM9/lHDVQmXQrg==")
+db.bincoll.insert({"data":w})
+
+
+2. Long
+db.longcoll.insert({ "data" : NumberLong(322) })
+
+
+--------------get type----------
+db.intcoll.aggregate(
+    [
+        { "$project": { "fieldType": {  "$type": "$data"  } } }
+    ]
+)

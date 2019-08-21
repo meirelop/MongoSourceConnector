@@ -14,6 +14,8 @@ import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
+import org.bson.BsonDocument;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -22,6 +24,7 @@ import java.time.Instant;
 import java.util.*;
 import com.orange.kafka.utils.DateUtils;
 import static com.orange.kafka.Constants.*;
+import com.orange.kafka.MongodbSourceTask.ArrayEncoding;
 
 /**
  * <p>
@@ -45,7 +48,7 @@ public class TimestampQuerier extends TableQuerier{
     private Instant recordDate;
     private String includeFields;
     private String excludeFields;
-    private DataConverter converter = new DataConverter();
+    private ArrayEncoding arrayEncoding;
 
     /**
      * Constructs and initailizes an TimestampQuerier.
@@ -57,7 +60,7 @@ public class TimestampQuerier extends TableQuerier{
      * @param lastDate latest date, querier will take records bigger than this date
      */
     public TimestampQuerier
-            (
+            (       ArrayEncoding arrayEncoding,
                     String topic,
                     String mongoUri,
                     String DBname,
@@ -68,7 +71,8 @@ public class TimestampQuerier extends TableQuerier{
                     Instant lastDate
             )
     {
-        super(topic,mongoUri,DBname,collectionName, includeFields, excludeFields);
+        super(arrayEncoding,topic,mongoUri,DBname,collectionName, includeFields, excludeFields);
+        this.arrayEncoding = arrayEncoding;
         this.topic = topic;
         this.timestampColumn = timestampColumn;
         this.DBname = DBname;
@@ -128,26 +132,28 @@ public class TimestampQuerier extends TableQuerier{
 
     @Override
     public SourceRecord extractRecord() {
+        DataConverter converter = new DataConverter(arrayEncoding);
         Document record = cursor.next();
         recordDate = record.getDate(timestampColumn).toInstant();
 
-        ObjectId objectID = (ObjectId) record.remove("_id");
-        Schema keySchema = converter.keySchema;
-        Struct keyStruct = converter.getKeyStruct(objectID);
+        BsonDocument bsonRecord = record.toBsonDocument(BsonDocument.class, MongoClient.getDefaultCodecRegistry());
+        Set<Map.Entry<String, BsonValue>> keyValuePairs = bsonRecord.entrySet();
 
         SchemaBuilder valueSchemaBuilder = SchemaBuilder.struct().name(collectionName);
-        converter.addFieldSchema(record, valueSchemaBuilder);
+        converter.setSchema(keyValuePairs, valueSchemaBuilder);
         Schema valueSchema = valueSchemaBuilder.build();
-        Struct valueStruct = converter.setFieldStruct(record, valueSchema);
+
+        Struct value = new Struct(valueSchema);
+        converter.setStruct(keyValuePairs, value, valueSchema);
 
         return new SourceRecord(
                 sourcePartition(),
                 sourceOffset(),
                 topic,
                 null, // partition will be inferred by the framework
-                keySchema,
-                keyStruct,
+                null,
+                null,
                 valueSchema,
-                valueStruct);
+                value);
     }
 }

@@ -1,6 +1,5 @@
 package com.orange.kafka;
 
-
 public class Constants {
     public static final String DATABASE_NAME_FIELD = "DATABASE_NAME";
     public static final String COLLECTION_FIELD = "COLLECTION_NAME";
