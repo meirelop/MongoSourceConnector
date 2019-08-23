@@ -100,4 +100,11 @@ abstract class TableQuerier {
         }
 
     }
+
+    public Map<String, String> sourcePartition() {
+        Map<String, String> map = new HashMap<>();
+        map.put(Constants.DATABASE_NAME_FIELD, DBname);
+        map.put(Constants.COLLECTION_FIELD, collectionName);
+        return map;
+    }
 }

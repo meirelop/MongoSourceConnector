@@ -98,13 +98,6 @@ public class TimestampIncrementQuerier extends TableQuerier{
         this.lastIncrement = lastIncrement;
     }
 
-    private Map<String, String> sourcePartition() {
-        Map<String, String> map = new HashMap<>();
-        map.put(Constants.DATABASE_NAME_FIELD, DBname);
-        map.put(Constants.COLLECTION_FIELD, collectionName);
-        return map;
-    }
-
     private Map<String, String> sourceOffset() {
         Map<String, String> map = new HashMap<>();
         lastDate = DateUtils.MaxInstant(lastDate, recordDate);

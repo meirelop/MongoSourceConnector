@@ -85,13 +85,6 @@ public class TimestampQuerier extends TableQuerier{
         this.collection = database.getCollection(collectionName);
     }
 
-    private Map<String, String> sourcePartition() {
-        Map<String, String> map = new HashMap<>();
-        map.put(DATABASE_NAME_FIELD, DBname);
-        map.put(COLLECTION_FIELD, collectionName);
-        return map;
-    }
-
     private Map<String, String> sourceOffset() {
         Map<String, String> map = new HashMap<>();
         lastDate = DateUtils.MaxInstant(lastDate, recordDate);

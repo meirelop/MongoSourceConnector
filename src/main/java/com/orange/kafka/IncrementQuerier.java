@@ -83,14 +83,6 @@ public class IncrementQuerier extends TableQuerier{
         this.collection = database.getCollection(collectionName);
     }
 
-
-    private Map<String, String> sourcePartition() {
-        Map<String, String> map = new HashMap<>();
-        map.put(Constants.DATABASE_NAME_FIELD, DBname);
-        map.put(Constants.COLLECTION_FIELD, collectionName);
-        return map;
-    }
-
     private Map<String, String> sourceOffset() {
         Map<String, String> map = new HashMap<>();
         lastIncrement = Math.max(lastIncrement, recordIncrement);

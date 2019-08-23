@@ -9,16 +9,14 @@ import com.mongodb.client.model.Projections;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
-import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.data.Struct;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.Document;
 import java.util.*;
-import com.orange.kafka.MongodbSourceTask.ArrayEncoding;
-import static com.orange.kafka.MongodbSourceConnectorConfig.*;
 
-import org.bson.types.ObjectId;
+import com.orange.kafka.MongodbSourceTask.ArrayEncoding;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,13 +54,6 @@ public class BulkCollectionQuerier extends TableQuerier{
         this.mongoClient = new MongoClient(new MongoClientURI(mongoUri));
         this.database = mongoClient.getDatabase(DBname);
         this.collection = database.getCollection(collectionName);
-    }
-
-    private Map<String, String> sourcePartition() {
-        Map<String, String> map = new HashMap<>();
-        map.put(Constants.DATABASE_NAME_FIELD, DBname);
-        map.put(Constants.COLLECTION_FIELD, collectionName);
-        return map;
     }
 
     public void executeCursor() {
