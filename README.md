@@ -129,5 +129,5 @@ A *unit test* is a JUnit test class named `*Test.java` or `Test*.java` that neve
 
 # Contribute
 
-- Source Code: https://github.com/
-- Issue Tracker: https://github.com/issues
+- Source Code: https://github.com/meirelop/MongoSourceConnector
+- Issue Tracker: https://github.com/meirelop/MongoSourceConnector/issues
